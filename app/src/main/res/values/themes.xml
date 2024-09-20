@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.WeatherApp" parent="Theme.AppCompat.Light.NoActionBar" />
+
+    <style name="Theme.WeatherApp.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="colorPrimary">@color/sky_blue_light</item>
+        <item name="colorSecondary">@color/sky_blue_dark</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/snowy_white</item>
+        <item name="android:statusBarColor">@color/sky_blue_light</item>
+    </style>
+
+    <style name="Theme.WeatherApp.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.WeatherApp.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+</resources>

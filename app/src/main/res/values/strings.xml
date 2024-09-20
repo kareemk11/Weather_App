@@ -1,0 +1,64 @@
+<resources>
+    <string name="app_name">Weather App</string>
+    <string name="open_nav">Open Navigation Drawer</string>
+    <string name="close_nav">Close Navigation Drawer</string>
+
+    <string name="settings">Settings</string>
+    <string name="home">Home</string>
+    <string name="logout">Logout</string>
+    <string name="favourites">Favourites</string>
+    <string name="alerts">Alerts</string>
+    <string name="weather_wizard">Weather Wizard</string>
+
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="navigation_drawer_open">Open</string>
+    <string name="navigation_drawer_close">Closed</string>
+
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="_25_c">25°C</string>
+    <string name="clear_sky">Clear Sky</string>
+    <string name="city_name">City Name</string>
+    <string name="date_and_time">Date and Time</string>
+    <string name="initial_setup">Initial Setup</string>
+    <string name="location">Location</string>
+    <string name="gps">GPS</string>
+    <string name="map">Map</string>
+    <string name="notifications">Notifications</string>
+    <string name="enable_notifications">Enable Notifications</string>
+    <string name="_28_c">28°C</string>
+    <string name="_18_c">18°C</string>
+    <string name="clouds">Clouds</string>
+    <string name="_20">20%</string>
+    <string name="wind">Wind</string>
+    <string name="_10_m_s">10 m/s</string>
+    <string name="pressure">Pressure</string>
+    <string name="_1015_hpa">1015 hPa</string>
+    <string name="humidity">Humidity</string>
+    <string name="_60">60%</string>
+    <string name="visibility">Visibility</string>
+    <string name="_10_km">10 km</string>
+    <string name="uv_index">UV Index</string>
+    <string name="_5">5</string>
+    <string name="language">Language</string>
+    <string name="arabic">Arabic</string>
+    <string name="english">English</string>
+    <string name="units">Units</string>
+    <string name="meters_per_second_m_s_celsius">Meters per second (m/s) / Celsius</string>
+    <string name="miles_per_hour_mph_celsius">Miles per hour (mph) / Celsius</string>
+    <string name="meters_per_second_m_s_kelvin">Meters per second (m/s) / Kelvin</string>
+    <string name="title">Title</string>
+    <string name="location_enabled">Location Ena\nbled</string>
+    <string name="location_permission_denied">Location permission denied</string>
+    <string name="enable_location">Please enable location</string>
+
+    <string name="my_location">My Location</string>
+    <string name="tap_to_select_location">Tap on the map to select a location</string>
+    <string name="confirm_location">Confirm Location</string>
+</resources>

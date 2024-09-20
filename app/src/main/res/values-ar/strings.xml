@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name">تطبيق الطقس</string>
+    <string name="open_nav">فتح درج التنقل</string>
+    <string name="close_nav">إغلاق درج التنقل</string>
+
+    <string name="settings">الإعدادات</string>
+    <string name="home">الرئيسية</string>
+    <string name="logout">تسجيل الخروج</string>
+    <string name="favourites">المفضلة</string>
+    <string name="alerts">التنبيهات</string>
+    <string name="weather_wizard">ساحر الطقس</string>
+
+    <string name="hello_blank_fragment">مرحبا بالجزء الفارغ</string>
+    <string name="navigation_drawer_open">فتح</string>
+    <string name="navigation_drawer_close">مغلق</string>
+
+    <string name="nav_header_title">أندرويد ستوديو</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">رأس التنقل</string>
+    <string name="action_settings">الإعدادات</string>
+
+    <string name="menu_home">الرئيسية</string>
+    <string name="menu_gallery">المعرض</string>
+    <string name="menu_slideshow">عرض الشرائح</string>
+    <string name="_25_c">٢٥° مئوية</string>
+    <string name="clear_sky">سماء صافية</string>
+    <string name="city_name">اسم المدينة</string>
+    <string name="date_and_time">التاريخ والوقت</string>
+    <string name="initial_setup">الإعداد الأولي</string>
+    <string name="location">الموقع</string>
+    <string name="gps">نظام تحديد المواقع</string>
+    <string name="map">الخريطة</string>
+    <string name="notifications">الإشعارات</string>
+    <string name="enable_notifications">تفعيل الإشعارات</string>
+    <string name="_28_c">٢٨° مئوية</string>
+    <string name="_18_c">١٨° مئوية</string>
+    <string name="clouds">الغيوم</string>
+    <string name="_20">٢٠٪</string>
+    <string name="wind">الرياح</string>
+    <string name="_10_m_s">١٠ م/ث</string>
+    <string name="pressure">الضغط</string>
+    <string name="_1015_hpa">١٠١٥ هكتوباسكال</string>
+    <string name="humidity">الرطوبة</string>
+    <string name="_60">٦٠٪</string>
+    <string name="visibility">الرؤية</string>
+    <string name="_10_km">١٠ كم</string>
+    <string name="uv_index">مؤشر الأشعة فوق البنفسجية</string>
+    <string name="_5">٥</string>
+    <string name="language">اللغة</string>
+    <string name="arabic">العربية</string>
+    <string name="english">الإنجليزية</string>
+    <string name="units">الوحدات</string>
+    <string name="meters_per_second_m_s_celsius">متر في الثانية (م/ث) / مئوية</string>
+    <string name="miles_per_hour_mph_celsius">ميل في الساعة (ميل/ساعة) / مئوية</string>
+    <string name="meters_per_second_m_s_kelvin">متر في الثانية (م/ث) / كلفن</string>
+</resources>

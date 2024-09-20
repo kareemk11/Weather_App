@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="SwitchTheme" parent="Theme.AppCompat.Light">
+        <item name="colorControlActivated">@color/sky_blue_light</item>
+        <item name="android:colorForeground">@color/cool_grey</item>
+    </style>
+</resources>
