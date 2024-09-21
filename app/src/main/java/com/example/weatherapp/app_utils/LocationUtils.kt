@@ -57,18 +57,35 @@ object LocationUtils {
         onLocationReceived: (latitude: Double, longitude: Double) -> Unit
     ) {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(activity)
+//        fusedLocationProviderClient.requestLocationUpdates(
+//            LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0).build(),
+//            object : LocationCallback() {
+//                override fun onLocationResult(locationResult: LocationResult) {
+//                    super.onLocationResult(locationResult)
+//                    for (location in locationResult.locations) {
+//                        Log.i(TAG, "Location received: ${location.latitude}, ${location.longitude}")
+//                        onLocationReceived(location.latitude, location.longitude)
+//
+//                    }
+//                }
+//            },
+//            Looper.getMainLooper()
+//        )
         fusedLocationProviderClient.requestLocationUpdates(
-            LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0).build(),
-            object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-                    for (location in locationResult.locations) {
-                        Log.i(TAG, "Location received: ${location.latitude}, ${location.longitude}")
-                        onLocationReceived(location.latitude, location.longitude)
-                        break
-                    }
+            LocationRequest.Builder(0).apply {
+                setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            }.build(), object : LocationCallback() {
+                override fun onLocationResult(p0: LocationResult) {
+                    super.onLocationResult(p0)
+
+                    val location = p0.locations.last()
+                    val latitude = location.latitude
+                    val longitude = location.longitude
+                    onLocationReceived(latitude, longitude)
+                    Log.i("Result", "onLocationResult: $latitude $longitude")
                 }
             },
-            Looper.getMainLooper()
+            Looper.myLooper()
         )
     }
 

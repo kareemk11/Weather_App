@@ -27,7 +27,7 @@ object SharedPreferencesUtils {
             putString("location_method", selectedLocationMethod)
             putString("unit", "metric")
             putString("language", "en")
-            apply()
+            commit()
         }
     }
 

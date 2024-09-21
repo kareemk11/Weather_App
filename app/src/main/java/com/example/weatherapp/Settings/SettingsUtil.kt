@@ -10,12 +10,7 @@ fun setLocale(activity: AppCompatActivity, languageCode: String) {
     config.setLocale(locale)
     activity.createConfigurationContext(config)
     activity.resources.updateConfiguration(config, activity.resources.displayMetrics)
-    //refreshActivity(activity)
 }
 
-fun refreshActivity(activity: AppCompatActivity) {
-    val intent = activity.intent
-    activity.finish()
-    activity.startActivity(intent)
-}
+
 

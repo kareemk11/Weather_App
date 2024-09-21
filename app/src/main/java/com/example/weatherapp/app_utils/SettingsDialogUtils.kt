@@ -16,7 +16,6 @@ object SettingsDialogUtils {
         onSave: (String, Boolean) -> Unit
     ) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_initial_settings, null)
-
         val locationGroup = dialogView.findViewById<RadioGroup>(R.id.locationGroup)
         val notificationsSwitch = dialogView.findViewById<SwitchCompat>(R.id.notificationSwitch)
 

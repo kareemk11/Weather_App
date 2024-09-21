@@ -8,9 +8,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioGroup
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.appcompat.widget.SwitchCompat
+import com.example.myapp.utils.NotificationUtils
+import com.example.weatherapp.Model.SettingsInPlace
 import com.example.weatherapp.R
 
 class SettingsFragment : Fragment() {
@@ -46,12 +49,6 @@ class SettingsFragment : Fragment() {
         notificationsSwitch = view.findViewById(R.id.notificationSwitch)
 
         loadSettings()
-//        putBoolean("notifications_enabled", notificationsEnabled) // Save user's choice for notifications
-//        putString("location_method", selectedLocationMethod) // Save user's choice for location method
-//
-//        // Save default values for other settings
-//        putString("unit", "metric") // Default unit: Celsius (metric)
-//        putString("language", "en") // Default
 
         locationGroup.setOnCheckedChangeListener { _, checkedId ->
             val selectedLocationMethod = when (checkedId) {
@@ -85,6 +82,12 @@ class SettingsFragment : Fragment() {
 
         notificationsSwitch.setOnCheckedChangeListener { _, isChecked ->
             saveSetting("notifications_enabled", isChecked)
+            if (isChecked) {
+                NotificationUtils.checkAndPromptEnableNotifications(requireContext())
+            }
+            else {
+                Toast.makeText(context, R.string.notifications_disabled, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -122,21 +125,10 @@ class SettingsFragment : Fragment() {
                 }
                 is String -> {
                     putString(key, value)
-
                 }
                 else -> throw IllegalArgumentException("Unsupported type")
             }
             apply()
-//            if (value is Boolean)
-//                Log.i(TAG, "saveSetting: "+sharedPreferences.getBoolean(key, true))
-//            else
-//                Log.i(TAG, "saveSetting: "+sharedPreferences.getString(key, "GPS" ))
-//            Log.i(TAG, "saveSetting: "+sharedPreferences.getString(key, "GPS"))
-//
-//            Log.i(TAG, "saveSetting: "+sharedPreferences.getString(key, "metric"))
-//            Log.i(TAG, "saveSetting: "+sharedPreferences.getString(key, "en"))
-
-
         }
     }
 }
