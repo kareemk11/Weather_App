@@ -6,11 +6,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weatherapp.Model.CurrentLocation
+import com.example.weatherapp.Model.FavouriteLocation
 import com.example.weatherapp.Model.ForecastResponse
 import com.example.weatherapp.Model.SettingsInPlace
 import com.example.weatherapp.Model.WeatherRepository
 import com.example.weatherapp.Model.WeatherResponse
-import com.google.android.gms.location.FusedLocationProviderClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -30,19 +30,16 @@ class HomeWeatherViewModel(private val repository: WeatherRepository) : ViewMode
     //Settings
 
 
-
-
-    fun fetchWeatherData() {
-
-
+    fun fetchWeatherData(latitude: Double, longitude: Double) {
         viewModelScope.launch(Dispatchers.IO) {
             val weatherResponse = repository.getCurrentWeather(
-                CurrentLocation.latitude,
-                CurrentLocation.longitude,
+                latitude,
+                longitude,
                 SettingsInPlace.unit,
-                SettingsInPlace.language)
-            Log.i(TAG, "fetchWeatherData: "+ CurrentLocation.latitude.toString())
-            Log.i(TAG, "fetchWeatherData: "+ CurrentLocation.longitude.toString())
+                SettingsInPlace.language
+            )
+            Log.i(TAG, "fetchWeatherData: " + CurrentLocation.latitude.toString())
+            Log.i(TAG, "fetchWeatherData: " + CurrentLocation.longitude.toString())
 
             Log.i(TAG, "fetchWeatherData: " + weatherResponse.body())
             if (weatherResponse.isSuccessful) {
@@ -58,13 +55,15 @@ class HomeWeatherViewModel(private val repository: WeatherRepository) : ViewMode
         }
 
     }
-    fun fetchForecastData() {
+
+    fun fetchForecastData( latitude: Double,  longitude: Double) {
         viewModelScope.launch(Dispatchers.IO) {
             val forecastResponse = repository.getFiveDayForecast(
-                CurrentLocation.latitude,
-                CurrentLocation.longitude,
+                latitude,
+                longitude,
                 SettingsInPlace.unit,
-                SettingsInPlace.language)
+                SettingsInPlace.language
+            )
             if (forecastResponse.isSuccessful) {
                 _forecastData.postValue(forecastResponse.body())
             } else {
@@ -74,10 +73,38 @@ class HomeWeatherViewModel(private val repository: WeatherRepository) : ViewMode
 
     }
 
+    fun fetchForecastForFav() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val forecastResponse = repository.getFiveDayForecast(
+                FavouriteLocation.lat,
+                FavouriteLocation.lon,
+                SettingsInPlace.unit,
+                SettingsInPlace.language
+            )
+            if (forecastResponse.isSuccessful) {
+                _forecastData.postValue(forecastResponse.body())
+            } else {
+                // Handle error
+            }
+        }
 
+    }
 
+    fun fetchWeatherForFav() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val weatherResponse = repository.getCurrentWeather(
+                FavouriteLocation.lat,
+                FavouriteLocation.lon,
+                SettingsInPlace.unit,
+                SettingsInPlace.language
+            )
+            if (weatherResponse.isSuccessful) {
+                _weatherData.postValue(weatherResponse.body())
+            } else {
+                // Handle error
+            }
+        }
+    }
 }
-
-
 
 //fun getCurrLocation():Pair<Double,Double> {}

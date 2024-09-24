@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.WeatherApp" parent="Theme.AppCompat.Light.NoActionBar" />
+    <style name="Theme.WeatherApp" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/sky_blue_light</item>
+    </style>
 
     <style name="Theme.WeatherApp.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -13,7 +15,18 @@
         <item name="android:statusBarColor">@color/sky_blue_light</item>
     </style>
 
-    <style name="Theme.WeatherApp.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="YourMaterialCalendarTheme" parent="Theme.MaterialComponents.Light">
+        <item name="colorPrimary">@color/windy_green</item>
+        <item name="colorPrimaryVariant">@color/sky_blue_light</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="colorOnSurface">@color/dark_grey</item>
+        <item name="colorOnBackground">@color/dark_grey</item>
+    </style>
 
+    <style name="Theme.WeatherApp.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
     <style name="Theme.WeatherApp.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

@@ -24,10 +24,10 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         android:layout_margin="16dp"
+        android:backgroundTint="@color/windy_green"
         android:contentDescription="Add new favorite"
-        android:backgroundTint="@color/deep_orange"
-        app:tint="@color/white"
-        app:srcCompat="@android:drawable/ic_input_add"/>
+        app:srcCompat="@drawable/baseline_favorite_24"
+        app:tint="@color/white" />
 
     <FrameLayout
         android:id="@+id/contentFrame"
@@ -35,7 +35,6 @@
         android:layout_height="match_parent"
         android:layout_below="@id/titleTextView">
 
-        <!-- Empty state view -->
         <LinearLayout
             android:id="@+id/emptyStateView"
             android:layout_width="match_parent"
@@ -60,7 +59,6 @@
 
         </LinearLayout>
 
-        <!-- RecyclerView for favorites -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/favoritesRecyclerView"
             android:layout_width="match_parent"
