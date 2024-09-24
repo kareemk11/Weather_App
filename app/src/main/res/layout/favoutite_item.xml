@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
+    android:id="@+id/weatherLocationCard"
     app:cardCornerRadius="8dp"
     app:cardElevation="4dp"
     app:cardBackgroundColor="@color/white">
@@ -37,14 +38,6 @@
                 android:textColor="@color/dark_grey"
                 android:textStyle="bold"
                 android:text="Place Name"/>
-
-            <TextView
-                android:id="@+id/temperature"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textColor="@color/stormy_grey"
-                android:text="Temperature"/>
 
         </LinearLayout>
 

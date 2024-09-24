@@ -1,8 +1,10 @@
 package com.example.weatherapp.Home
 
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
@@ -17,12 +19,14 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat.registerReceiver
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.myapp.utils.NotificationUtils
+import com.example.weatherapp.BrodcastRecievers.LocationReceiver
 import com.example.weatherapp.MapActivity
 import com.example.weatherapp.Model.CurrentLocation
 import com.example.weatherapp.Model.SettingsInPlace
@@ -57,6 +61,8 @@ class HomeFragment : Fragment() {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val LOCATION_SETTINGS_REQUEST = 1001
     private val LOCATION_PERMISSION_REQUEST_CODE = 101
+    private lateinit var locationReceiver: BroadcastReceiver
+
 
     // Date & Time
     @RequiresApi(Build.VERSION_CODES.O)
@@ -88,8 +94,7 @@ class HomeFragment : Fragment() {
         )
         setupRecyclerViews()
         viewModel = ViewModelProvider(this, viewModelFactory).get(HomeWeatherViewModel::class.java)
-        viewModel.fetchWeatherData()
-        viewModel.fetchForecastData()
+
 
         viewModel.weatherData.observe(viewLifecycleOwner) {
             updateUI()
@@ -101,10 +106,24 @@ class HomeFragment : Fragment() {
             adapterForecast.updateData(FilterUtils.filterDailyData(it))
         }
         binding.fabChangeLocation.setOnClickListener {
-            startActivity(Intent(requireContext(), MapActivity::class.java))
+            val intent = Intent(activity, MapActivity::class.java)
+            intent.putExtra("isFavourite", false)
+            startActivity(intent)
         }
+        binding.group.visibility = View.GONE
 
+    }
 
+    override fun onResume() {
+        super.onResume()
+
+        locationReceiver = LocationReceiver()
+        val intentFilter = IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION)
+        requireActivity().registerReceiver(locationReceiver, intentFilter)
+    }
+    override fun onPause() {
+        super.onPause()
+        requireActivity().unregisterReceiver(locationReceiver)
     }
 
     override fun onStart() {
@@ -148,15 +167,14 @@ class HomeFragment : Fragment() {
             }
         } else {
             binding.fabChangeLocation.visibility = View.VISIBLE
+            binding.progressBar2.visibility = View.GONE
             val sharedPreferences =
                 requireContext().getSharedPreferences("map_preferences", Context.MODE_PRIVATE)
             val latitude = sharedPreferences.getFloat("latitude", -1.0f)
             val longitude = sharedPreferences.getFloat("longitude", -1.0f)
             if (latitude != -1.0f && longitude != -1.0f) {
-                CurrentLocation.latitude = latitude.toDouble()
-                CurrentLocation.longitude = longitude.toDouble()
-                viewModel.fetchWeatherData()
-                viewModel.fetchForecastData()
+                viewModel.fetchWeatherData(latitude.toDouble(), longitude.toDouble())
+                viewModel.fetchForecastData(latitude.toDouble(), longitude.toDouble())
             } else {
                 startActivity(Intent(requireContext(), MapActivity::class.java))
             }
@@ -236,8 +254,10 @@ class HomeFragment : Fragment() {
                     CurrentLocation.longitude = location.longitude
                     val latitude = location.latitude
                     val longitude = location.longitude
-                    viewModel.fetchWeatherData()
-                    viewModel.fetchForecastData()
+                    viewModel.fetchWeatherData(latitude, longitude)
+                    viewModel.fetchForecastData(latitude, longitude)
+                    binding.progressBar2.visibility = View.GONE
+                    binding.group.visibility = View.GONE
                     Log.i("Result", "onLocationResult: $latitude $longitude")
                 }
             },
@@ -261,6 +281,7 @@ class HomeFragment : Fragment() {
             }
             .setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
+                hideAllViews()
             }
             .show()
     }
@@ -281,11 +302,7 @@ class HomeFragment : Fragment() {
         adapterForecast = ForecastAdapter(emptyList())
         recyclerViewForecast.adapter = adapterForecast
     }
-//
-//    private fun saveSettingsObject() {
-//        val settings = SharedPreferencesUtils.saveSettingsObject(requireContext())
-//        setLocale(requireActivity() as AppCompatActivity, settings.language)
-//    }
+
 
 
     @Deprecated("Deprecated in Java")
@@ -336,6 +353,58 @@ class HomeFragment : Fragment() {
             "https://openweathermap.org/img/wn/${viewModel.weatherData.value?.weather?.get(0)?.icon}@2x.png"
         Glide.with(this).load(iconUrl).into(binding.ivWeatherIcon)
     }
+
+    private fun hideAllViews() {
+        binding.group.visibility = View.VISIBLE
+        binding.progressBar2.visibility = View.GONE
+        binding.fabChangeLocation.visibility = View.GONE
+        binding.tvTemperature.visibility = View.GONE
+        binding.tvCityName.visibility = View.GONE
+        binding.tvDateTime.visibility = View.GONE
+        binding.tvWeatherDescription.visibility = View.GONE
+        binding.cardMainWeather.visibility = View.GONE
+        binding.cardWeatherDetails.visibility = View.GONE
+        binding.threeHourForecast.visibility = View.GONE
+        binding.recyclerViewForecast.visibility = View.GONE
+        binding.tvCloudsLabel.visibility = View.GONE
+        binding.ivClouds.visibility = View.GONE
+        binding.tvCloudsValue.visibility = View.GONE
+        binding.tvWindLabel.visibility = View.GONE
+        binding.ivWind.visibility = View.GONE
+        binding.tvWindValue.visibility = View.GONE
+        binding.tvPressureLabel.visibility = View.GONE
+        binding.ivPressure.visibility = View.GONE
+        binding.tvPressureValue.visibility = View.GONE
+        binding.tvVisibilityLabel.visibility = View.GONE
+        binding.ivVisibility.visibility = View.GONE
+        binding.tvVisibilityValue.visibility = View.GONE
+        binding.tvHumidityLabel.visibility = View.GONE
+        binding.ivHumidity.visibility = View.GONE
+        binding.tvHumidityValue.visibility = View.GONE
+        binding.tvMaxTemp.visibility = View.GONE
+        binding.tvMinTemp.visibility = View.GONE
+
+
+    }
+
+    fun broadcastReceiver() {
+        locationReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent?) {
+                if (intent?.action == LocationManager.PROVIDERS_CHANGED_ACTION) {
+                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                    val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                    val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+                    if (!isGpsEnabled && !isNetworkEnabled) {
+                        Toast.makeText(context, "Location services are disabled", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Location services are enabled", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 

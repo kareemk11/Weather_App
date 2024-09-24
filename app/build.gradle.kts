@@ -1,7 +1,12 @@
+import java.util.Properties
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id ("kotlin-kapt")
+    id("kotlin-kapt")
+
+
 }
 
 android {
@@ -19,14 +24,24 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(localPropertiesFile.inputStream())
+        }
+
+        buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("API_KEY")}\"")
+        manifestPlaceholders["API_KEY"] = localProperties.getProperty("API_KEY", "")
     }
+
+
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
@@ -40,6 +55,7 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -76,28 +92,29 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    implementation (libs.androidx.navigation.fragment)
-    implementation (libs.androidx.navigation.ui)
+    implementation(libs.androidx.navigation.fragment)
+    implementation(libs.androidx.navigation.ui)
 
-    implementation (libs.androidx.drawerlayout)
-    implementation (libs.material)
+    implementation(libs.androidx.drawerlayout)
+    implementation(libs.material)
 
     //Glide
-    implementation (libs.glide)
-    annotationProcessor (libs.compiler)
+    implementation(libs.glide)
+    annotationProcessor(libs.compiler)
 //Retrofit
-    implementation (libs.gson)
-    implementation (libs.retrofit)
-    implementation (libs.converter.gson)
+    implementation(libs.gson)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 //Room
-    implementation (libs.androidx.room.ktx)
-    implementation (libs.androidx.room.runtime)
-    kapt (libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.runtime)
+    kapt(libs.androidx.room.compiler)
 
     implementation("com.google.android.gms:play-services-maps:18.0.1")
     implementation(libs.play.services.location)
-    implementation (libs.places)
-
+    implementation(libs.places)
+    implementation(libs.dotenv.kotlin)
+    implementation(libs.material)
 //Coroutine
 //    implementation '("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")'
 ////ViewModel
