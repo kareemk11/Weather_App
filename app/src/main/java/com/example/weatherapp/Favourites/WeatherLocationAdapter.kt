@@ -1,5 +1,6 @@
 package com.example.weatherapp.Favourites
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,13 +8,14 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.weatherapp.Model.CurrentWeather
 import com.example.weatherapp.R
 import java.io.Serializable
 
 class WeatherLocationAdapter(
-    private var favouriteWeatherLocations: List<FavouriteWeatherObject>,
-    private val onDeleteClick: (FavouriteWeatherObject) -> Unit,
-    private val onItemClick: (FavouriteWeatherObject) -> Unit
+    private var favouriteWeatherLocations: List<CurrentWeather>,
+    private val onDeleteClick: (CurrentWeather) -> Unit,
+    private val onItemClick: (CurrentWeather) -> Unit
 ) : RecyclerView.Adapter<WeatherLocationAdapter.WeatherLocationViewHolder>() {
 
     inner class WeatherLocationViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -48,9 +50,10 @@ class WeatherLocationAdapter(
         return favouriteWeatherLocations.size
     }
 
-    fun updateData(newFavouriteWeatherLocations: List<FavouriteWeatherObject>) {
+    fun updateData(newFavouriteWeatherLocations: List<CurrentWeather>) {
         favouriteWeatherLocations = newFavouriteWeatherLocations
         notifyDataSetChanged()
+        Log.i("WeatherLocationAdapter", "updateData: $favouriteWeatherLocations")
     }
 }
 

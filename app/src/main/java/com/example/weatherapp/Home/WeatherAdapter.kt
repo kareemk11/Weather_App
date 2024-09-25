@@ -55,6 +55,7 @@ class WeatherAdapter(private var weatherList: List<ForecastItem>) :
     override fun getItemCount(): Int = weatherList.size
 
     fun updateData(newWeatherList: List<ForecastItem>) {
+        if (newWeatherList.isEmpty()) return
        weatherList = newWeatherList
         notifyDataSetChanged()
     }

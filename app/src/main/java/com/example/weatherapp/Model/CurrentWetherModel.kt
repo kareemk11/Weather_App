@@ -39,15 +39,28 @@ data class Cloud(
     val all: Int
 )
 
-/*
-"temp": 283.61,
-        "feels_like": 282.8,
-        "temp_min": 282.71,
-        "temp_max": 284.8,
-        "pressure": 1014,
-        "humidity": 80,
-        "sea_level": 1014,
-        "grnd_level": 946
-    },
-    "visibility": 10000,
- */
+
+fun WeatherResponse.toCurrentWeather( lat: Double,  lon: Double, id: Int = 0): CurrentWeather {
+    return CurrentWeather(
+        id = id,
+        lat = lat,
+        lon = lon,
+        name = this.name,
+        temp = this.main.temp,
+        pressure = this.main.pressure,
+        humidity = this.main.humidity,
+        temp_min = this.main.temp_min,
+        temp_max = this.main.temp_max,
+        description = this.weather.firstOrNull()?.description ?: "",
+        icon = this.weather.firstOrNull()?.icon ?: "",
+        speed = this.wind.speed,
+        country = this.sys.country,
+        all = this.clouds.all
+    )
+}
+
+
+
+
+
+

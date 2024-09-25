@@ -28,9 +28,9 @@ class AlertsFragment : Fragment() {
 //    private var selectedDate: Calendar = Calendar.getInstance()
 //    private var notificationType: String = "notification"
     private val alerts = mutableListOf(
-        Alert("2023-09-23 15:30", "This is the first alert."),
-        Alert("2023-09-24 09:15", "This is another important notification."),
-        Alert("2023-09-25 18:45", "Reminder: Don't forget to bring your umbrella!"),
+        AlertTemp("2023-09-23 15:30", "This is the first alert."),
+        AlertTemp("2023-09-24 09:15", "This is another important notification."),
+        AlertTemp("2023-09-25 18:45", "Reminder: Don't forget to bring your umbrella!"),
     )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

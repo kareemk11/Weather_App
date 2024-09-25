@@ -10,16 +10,18 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.weatherapp.Favourites.FavouriteWeatherObject
+import com.example.weatherapp.Favourites.FavouritesViewModel
+import com.example.weatherapp.Favourites.FavouritesViewModelFactory
 import com.example.weatherapp.Home.ForecastAdapter
-import com.example.weatherapp.Home.HomeWeatherViewModel
-import com.example.weatherapp.Home.HomeWeatherViewModelFactory
 import com.example.weatherapp.Home.WeatherAdapter
+import com.example.weatherapp.Model.CurrentWeather
 import com.example.weatherapp.Model.SettingsInPlace
 import com.example.weatherapp.Model.WeatherRepository
 import com.example.weatherapp.Network.WeatherRemoteDataSource
+import com.example.weatherapp.WeatherDatabase.WeatherDatabase
 import com.example.weatherapp.WeatherDatabase.WeatherLocalDataSource
 import com.example.weatherapp.app_utils.FilterUtils
+import com.example.weatherapp.app_utils.InternetConnectionUtil
 import com.example.weatherapp.databinding.ActivityFavouritesWeatherBinding
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -30,7 +32,7 @@ class FavouritesWeatherActivity : AppCompatActivity() {
 
     // Weather
     private lateinit var binding: ActivityFavouritesWeatherBinding
-    private lateinit var viewModel: HomeWeatherViewModel
+    private lateinit var viewModel: FavouritesViewModel
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: WeatherAdapter
     private lateinit var recyclerViewForecast: RecyclerView
@@ -53,28 +55,41 @@ class FavouritesWeatherActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.progressBar.visibility = ProgressBar.GONE
 
-        val viewModelFactory = HomeWeatherViewModelFactory(
+        val viewModelFactory = FavouritesViewModelFactory(
             WeatherRepository.getInstance(
-                WeatherLocalDataSource(), WeatherRemoteDataSource.getInstance()
+                WeatherLocalDataSource(
+                    WeatherDatabase.getInstance(this).forecastDao(),
+                    WeatherDatabase.getInstance(this).alertDao(),
+                    WeatherDatabase.getInstance(this).currentWeatherDao()
+                ), WeatherRemoteDataSource.getInstance()
             )
         )
         setupRecyclerViews()
 
-        viewModel = ViewModelProvider(this, viewModelFactory).get(HomeWeatherViewModel::class.java)
+        viewModel = ViewModelProvider(this, viewModelFactory).get(FavouritesViewModel::class.java)
 
-        val fav = intent.getSerializableExtra("cords") as FavouriteWeatherObject
+        val fav = intent.getSerializableExtra("cords") as CurrentWeather
+        if (InternetConnectionUtil.isInternetAvailable(this)) {
+            viewModel.fetchWeatherDataFavourites(fav.lat, fav.lon)
+            viewModel.fetchForecastDataFavourites(fav.lat, fav.lon)
 
-        viewModel.fetchWeatherData(fav.latitude, fav.longitude)
-        viewModel.fetchForecastData(fav.latitude, fav.longitude)
+        } else {
+            viewModel.getFavouriteForecastDataFromLocal(fav.id)
+            viewModel.getFavouriteWeatherDateFromLocal(fav)
+        }
 
 
-        viewModel.weatherData.observe(this) {
+
+
+        viewModel.weather.observe(this) {
             updateUI()
         }
 
-        viewModel.forecastData.observe(this) {
-            adapter.updateData(FilterUtils.filterCurrentDayData(it))
-            adapterForecast.updateData(FilterUtils.filterDailyData(it))
+        viewModel.forecast.observe(this) {
+            if (it.list.isNotEmpty()) {
+                adapter.updateData(FilterUtils.filterCurrentDayData(it))
+                adapterForecast.updateData(FilterUtils.filterDailyData(it))
+            }
         }
     }
 
@@ -96,7 +111,7 @@ class FavouritesWeatherActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateUI() {
-        val weather = viewModel.weatherData.value
+        val weather = viewModel.weather.value
         if (weather != null) {
             if (SettingsInPlace.unit == "metric") {
                 binding.tvTemperature.text = "${weather.main?.temp?.toInt()}°C"
