@@ -47,6 +47,7 @@ class ForecastAdapter(
 
     fun updateData(newForecastList: List<ForecastItem>) {
 
+        if (newForecastList.isEmpty()) return
         forecastList = newForecastList
         Log.i(TAG, "updateData: $forecastList")
         notifyDataSetChanged()

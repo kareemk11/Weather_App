@@ -9,7 +9,7 @@ import java.util.Locale
 object FilterUtils {
 
 
-     fun filterCurrentDayData(forecastResponse: ForecastResponse): List<ForecastItem> {
+    fun filterCurrentDayData(forecastResponse: ForecastResponse): List<ForecastItem> {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
         return forecastResponse.list.filter { forecast ->
@@ -18,8 +18,10 @@ object FilterUtils {
         }
     }
 
-     fun filterDailyData(forecastResponse: ForecastResponse): List<ForecastItem> {
+    fun filterDailyData(forecastResponse: ForecastResponse): List<ForecastItem> {
         val dailyData = mutableListOf<ForecastItem>()
+
+
         forecastResponse.list.filter { forecast ->
             val time = forecast.dt_txt.split(" ")[1]
             time == "12:00:00"
@@ -27,9 +29,12 @@ object FilterUtils {
             dailyData.add(forecast)
         }
 
-        dailyData.removeAt(0)
 
+        if (dailyData.isNotEmpty()) {
+            dailyData.removeAt(0)
+        }
 
         return dailyData
     }
+
 }

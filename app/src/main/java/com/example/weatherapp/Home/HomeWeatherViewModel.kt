@@ -6,11 +6,12 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weatherapp.Model.CurrentLocation
-import com.example.weatherapp.Model.FavouriteLocation
 import com.example.weatherapp.Model.ForecastResponse
 import com.example.weatherapp.Model.SettingsInPlace
 import com.example.weatherapp.Model.WeatherRepository
 import com.example.weatherapp.Model.WeatherResponse
+import com.example.weatherapp.Model.toForecastResponse
+import com.example.weatherapp.Model.toWeatherResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -56,7 +57,7 @@ class HomeWeatherViewModel(private val repository: WeatherRepository) : ViewMode
 
     }
 
-    fun fetchForecastData( latitude: Double,  longitude: Double) {
+    fun fetchForecastData(latitude: Double, longitude: Double) {
         viewModelScope.launch(Dispatchers.IO) {
             val forecastResponse = repository.getFiveDayForecast(
                 latitude,
@@ -73,38 +74,22 @@ class HomeWeatherViewModel(private val repository: WeatherRepository) : ViewMode
 
     }
 
-    fun fetchForecastForFav() {
+    fun getWeatherDateFromLocal() {
         viewModelScope.launch(Dispatchers.IO) {
-            val forecastResponse = repository.getFiveDayForecast(
-                FavouriteLocation.lat,
-                FavouriteLocation.lon,
-                SettingsInPlace.unit,
-                SettingsInPlace.language
-            )
-            if (forecastResponse.isSuccessful) {
-                _forecastData.postValue(forecastResponse.body())
-            } else {
-                // Handle error
-            }
-        }
-
-    }
-
-    fun fetchWeatherForFav() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val weatherResponse = repository.getCurrentWeather(
-                FavouriteLocation.lat,
-                FavouriteLocation.lon,
-                SettingsInPlace.unit,
-                SettingsInPlace.language
-            )
-            if (weatherResponse.isSuccessful) {
-                _weatherData.postValue(weatherResponse.body())
-            } else {
-                // Handle error
-            }
+            val currentWeather = repository.getCurrentWeatherFromLocal()
+            _weatherData.postValue(currentWeather.toWeatherResponse())
         }
     }
+
+    fun getForecastDataFromLocal() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val forecastList = repository.getForecastByWeatherID(1)
+            _forecastData.postValue(forecastList.toForecastResponse())
+        }
+    }
+
+
+
+
 }
 
-//fun getCurrLocation():Pair<Double,Double> {}

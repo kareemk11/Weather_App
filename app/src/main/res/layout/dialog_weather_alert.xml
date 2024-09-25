@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dialog_weather_alert.xml -->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Date Picker -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Date" />
+
+        <DatePicker
+            android:id="@+id/date_picker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:calendarViewShown="true" />
+
+        <!-- Start Time Picker -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start Time" />
+
+        <TimePicker
+            android:id="@+id/start_time_picker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:timePickerMode="spinner" />
+
+
+        <!-- Switch for Notification -->
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/is_notification_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enable Notification" />
+    </LinearLayout>
+
+</ScrollView>

@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.weatherapp.R
 
 class AlertAdapter(
-    private val alerts: MutableList<Alert>,
+    private val alerts: MutableList<AlertTemp>,
     private val onDeleteClick: (Int) -> Unit
 ) : RecyclerView.Adapter<AlertAdapter.ViewHolder>() {
 
@@ -44,4 +44,4 @@ class AlertAdapter(
     }
 }
 
-data class Alert(var dateTime: String, val message: String)
+data class AlertTemp(var dateTime: String, val message: String)

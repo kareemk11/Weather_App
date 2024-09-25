@@ -6,10 +6,16 @@ import android.location.Geocoder
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.weatherapp.Favourites.FavouriteWeatherObject
-import com.example.weatherapp.Favourites.TempRepo
-import com.example.weatherapp.Model.FavouriteLocation
+import androidx.lifecycle.ViewModelProvider
+import com.example.weatherapp.Favourites.FavouritesViewModel
+import com.example.weatherapp.Favourites.FavouritesViewModelFactory
+import com.example.weatherapp.Model.WeatherRepository
+import com.example.weatherapp.Network.WeatherRemoteDataSource
+import com.example.weatherapp.WeatherDatabase.WeatherDatabase
+import com.example.weatherapp.WeatherDatabase.WeatherLocalDataSource
+import com.example.weatherapp.app_utils.InternetConnectionUtil
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -33,8 +39,22 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var sharedPreferences: SharedPreferences
     private val TAG = "MapActivityLog"
 
+    private val viewModel: FavouritesViewModel by lazy {
+        ViewModelProvider(this, FavouritesViewModelFactory(
+            WeatherRepository.getInstance(
+                WeatherLocalDataSource(
+                    WeatherDatabase.getInstance(this).forecastDao(),
+                    WeatherDatabase.getInstance(this).alertDao(),
+                    WeatherDatabase.getInstance(this).currentWeatherDao()
+                    ), WeatherRemoteDataSource.getInstance()
+            )
+        )
+        ).get(FavouritesViewModel::class.java)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+
         Places.initialize(applicationContext, BuildConfig.API_KEY);
         super.onCreate(savedInstanceState)
         sharedPreferences = getSharedPreferences("map_preferences", MODE_PRIVATE)
@@ -46,36 +66,35 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Log.i(TAG, "onCreate: " + intent.getBooleanExtra("isFavourite", false))
         confirmButton.setOnClickListener {
-            if (selectedLatLng != null) {
-                val isFavourites = intent.getBooleanExtra("isFavourite", false)
-                if (isFavourites) {
 
-                    //save selected location to database TODO
-
-
+            if (InternetConnectionUtil.isInternetAvailable(this)) {
+                if (selectedLatLng != null) {
+                    val isFavourites = intent.getBooleanExtra("isFavourite", false)
+                    if (isFavourites) {
 
 
 
+                        Log.i(TAG, "onCreate: " + selectedLatLng!!.latitude)
+                        viewModel.saveFavouriteLocation(selectedLatLng!!.latitude, selectedLatLng!!.longitude)
+                        finish()
+                    }
+                    else {
+                        val editor = sharedPreferences.edit()
+                        editor.putFloat("latitude", selectedLatLng!!.latitude.toFloat())
+                        editor.putFloat("longitude", selectedLatLng!!.longitude.toFloat())
+                        editor.apply()
+                        finish()
 
-                    Log.i(TAG, "onCreate: " + selectedLatLng!!.latitude.toString())
-                    val cityName = getAddressFromCoordinates(selectedLatLng!!.latitude, selectedLatLng!!.longitude)
-                    TempRepo.addFavourite(FavouriteWeatherObject(cityName,selectedLatLng!!.latitude, selectedLatLng!!.longitude))
-                    Log.i(TAG, "onCreate: " + TempRepo.favourites.size)
-                    Log.i(TAG, "onCreate: " + FavouriteLocation.name)
-                    finish()
-                }
-                else {
-                    val editor = sharedPreferences.edit()
-                    editor.putFloat("latitude", selectedLatLng!!.latitude.toFloat())
-                    editor.putFloat("longitude", selectedLatLng!!.longitude.toFloat())
-                    editor.apply()
-                    finish()
+                    }
 
+                } else {
+                    Toast.makeText(this, "No location selected.", Toast.LENGTH_SHORT).show()
                 }
 
             } else {
-                Log.w(TAG, "No location selected.")
+                Toast.makeText(this, "No Internet Connection", Toast.LENGTH_SHORT).show()
             }
+
         }
 
 
@@ -93,6 +112,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
             override fun onError(status: Status) {
                 Log.e("AutocompleteError", "An error occurred: $status")
+                Toast.makeText(this@MapActivity, "Error: $status", Toast.LENGTH_SHORT).show()
             }
         })
 

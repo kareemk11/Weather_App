@@ -33,8 +33,10 @@ import com.example.weatherapp.Model.SettingsInPlace
 import com.example.weatherapp.Model.WeatherRepository
 import com.example.weatherapp.Network.WeatherRemoteDataSource
 import com.example.weatherapp.Settings.setLocale
+import com.example.weatherapp.WeatherDatabase.WeatherDatabase
 import com.example.weatherapp.WeatherDatabase.WeatherLocalDataSource
 import com.example.weatherapp.app_utils.FilterUtils
+import com.example.weatherapp.app_utils.InternetConnectionUtil
 import com.example.weatherapp.app_utils.SettingsDialogUtils
 import com.example.weatherapp.app_utils.SharedPreferencesUtils
 import com.example.weatherapp.databinding.FragmentHomeBinding
@@ -89,7 +91,12 @@ class HomeFragment : Fragment() {
 
         val viewModelFactory = HomeWeatherViewModelFactory(
             WeatherRepository.getInstance(
-                WeatherLocalDataSource(), WeatherRemoteDataSource.getInstance()
+                WeatherLocalDataSource(
+                    WeatherDatabase.getInstance(requireContext()).forecastDao(),
+                    WeatherDatabase.getInstance(requireContext()).alertDao(),
+                    WeatherDatabase.getInstance(requireContext()).currentWeatherDao()
+
+                ), WeatherRemoteDataSource.getInstance()
             )
         )
         setupRecyclerViews()
@@ -101,7 +108,6 @@ class HomeFragment : Fragment() {
         }
 
         viewModel.forecastData.observe(viewLifecycleOwner) {
-            // Log.i(TAG, "onViewCreated: $it")
             adapter.updateData(FilterUtils.filterCurrentDayData(it))
             adapterForecast.updateData(FilterUtils.filterDailyData(it))
         }
@@ -173,8 +179,17 @@ class HomeFragment : Fragment() {
             val latitude = sharedPreferences.getFloat("latitude", -1.0f)
             val longitude = sharedPreferences.getFloat("longitude", -1.0f)
             if (latitude != -1.0f && longitude != -1.0f) {
-                viewModel.fetchWeatherData(latitude.toDouble(), longitude.toDouble())
-                viewModel.fetchForecastData(latitude.toDouble(), longitude.toDouble())
+                if(InternetConnectionUtil.isInternetAvailable(requireContext()))
+                {
+                    viewModel.fetchWeatherData(latitude.toDouble(), longitude.toDouble())
+                    viewModel.fetchForecastData(latitude.toDouble(), longitude.toDouble())
+                } else {
+                    Toast.makeText(requireContext(), "No Internet Connection", Toast.LENGTH_SHORT).show()
+                    // Handle the case when there is no internet connection get data from local database
+                    viewModel.getWeatherDateFromLocal()
+                    viewModel.getForecastDataFromLocal()
+                }
+
             } else {
                 startActivity(Intent(requireContext(), MapActivity::class.java))
             }
@@ -224,6 +239,9 @@ class HomeFragment : Fragment() {
                     "Location permission is required for weather updates",
                     Toast.LENGTH_SHORT
                 ).show()
+
+                viewModel.getWeatherDateFromLocal()
+                viewModel.getForecastDataFromLocal()
             }
         }
     }
@@ -240,29 +258,42 @@ class HomeFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     private fun getFreshLocation() {
-        fusedLocationProviderClient =
-            LocationServices.getFusedLocationProviderClient(requireActivity())
-        fusedLocationProviderClient.requestLocationUpdates(
-            LocationRequest.Builder(0).apply {
-                setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            }.build(), object : LocationCallback() {
-                override fun onLocationResult(p0: LocationResult) {
-                    super.onLocationResult(p0)
+        if(InternetConnectionUtil.isInternetAvailable(requireContext()))
+        {
+            fusedLocationProviderClient =
+                LocationServices.getFusedLocationProviderClient(requireActivity())
+            fusedLocationProviderClient.requestLocationUpdates(
+                LocationRequest.Builder(0).apply {
+                    setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                }.build(), object : LocationCallback() {
+                    override fun onLocationResult(p0: LocationResult) {
+                        super.onLocationResult(p0)
 
-                    val location = p0.locations.last()
-                    CurrentLocation.latitude = location.latitude
-                    CurrentLocation.longitude = location.longitude
-                    val latitude = location.latitude
-                    val longitude = location.longitude
-                    viewModel.fetchWeatherData(latitude, longitude)
-                    viewModel.fetchForecastData(latitude, longitude)
-                    binding.progressBar2.visibility = View.GONE
-                    binding.group.visibility = View.GONE
-                    Log.i("Result", "onLocationResult: $latitude $longitude")
-                }
-            },
-            Looper.myLooper()
-        )
+                        val location = p0.locations.last()
+                        CurrentLocation.latitude = location.latitude
+                        CurrentLocation.longitude = location.longitude
+                        val latitude = location.latitude
+                        val longitude = location.longitude
+                        viewModel.fetchWeatherData(latitude, longitude)
+                        viewModel.fetchForecastData(latitude, longitude)
+                        binding.progressBar2.visibility = View.GONE
+                        binding.group.visibility = View.GONE
+                        Log.i("Result", "onLocationResult: $latitude $longitude")
+                        fusedLocationProviderClient.removeLocationUpdates(this)
+                    }
+                },
+                Looper.myLooper()
+            )
+
+        } else {
+            Toast.makeText(requireContext(), "No Internet Connection", Toast.LENGTH_SHORT).show()
+            // Handle the case when there is no internet connection get data from local database
+            binding.progressBar2.visibility = View.GONE
+            binding.group.visibility = View.GONE
+            viewModel.getWeatherDateFromLocal()
+            viewModel.getForecastDataFromLocal()
+        }
+
     }
 
     private fun checkLocationPermission(): Boolean {
@@ -386,24 +417,24 @@ class HomeFragment : Fragment() {
 
 
     }
-
-    fun broadcastReceiver() {
-        locationReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent?) {
-                if (intent?.action == LocationManager.PROVIDERS_CHANGED_ACTION) {
-                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-                    val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-                    val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-
-                    if (!isGpsEnabled && !isNetworkEnabled) {
-                        Toast.makeText(context, "Location services are disabled", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "Location services are enabled", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        }
-    }
+//
+//    fun broadcastReceiver() {
+//        locationReceiver = object : BroadcastReceiver() {
+//            override fun onReceive(context: Context, intent: Intent?) {
+//                if (intent?.action == LocationManager.PROVIDERS_CHANGED_ACTION) {
+//                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+//                    val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+//                    val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+//
+//                    if (!isGpsEnabled && !isNetworkEnabled) {
+//                        Toast.makeText(context, "Location services are disabled", Toast.LENGTH_SHORT).show()
+//                    } else {
+//                        Toast.makeText(context, "Location services are enabled", Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//            }
+//        }
+//    }
 
 }
 

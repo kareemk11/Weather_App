@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.work.runtime.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -115,6 +116,8 @@ dependencies {
     implementation(libs.places)
     implementation(libs.dotenv.kotlin)
     implementation(libs.material)
+    implementation (libs.androidx.appcompat)
+
 //Coroutine
 //    implementation '("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")'
 ////ViewModel
