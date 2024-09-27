@@ -31,7 +31,7 @@ interface AlertDao {
     suspend fun insertAlert(alert: Alert)
 
     @Query("SELECT * FROM Alert")
-    suspend fun getAllAlerts(): List<Alert>
+     fun getAllAlerts(): Flow<List<Alert>>
 
 
     @Query("DELETE FROM Alert WHERE id = :alertId")

@@ -5,18 +5,21 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.weatherapp.Model.Alert
 import com.example.weatherapp.R
 
 class AlertAdapter(
-    private val alerts: MutableList<AlertTemp>,
-    private val onDeleteClick: (Int) -> Unit
+    private val alerts: MutableList<Alert>,
+    private val onDeleteClick: (Alert) -> Unit,
 ) : RecyclerView.Adapter<AlertAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val alertTextView: TextView = view.findViewById(R.id.alertTextView)
         val dateTimeTextView: TextView = view.findViewById(R.id.dateTextView)
         val deleteButton: ImageButton = view.findViewById(R.id.deleteButton)
+        val card :CardView = view.findViewById(R.id.itemCard)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -27,13 +30,14 @@ class AlertAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val alert = alerts[position]
-        holder.dateTimeTextView.text = alert.dateTime
-        holder.alertTextView.text = alert.message
+        holder.dateTimeTextView.text = alert.alertDate + " " + alert.alertTime
+        holder.alertTextView.text = alert.alertType
 
         holder.deleteButton.setOnClickListener {
 
-            onDeleteClick(position)
+            onDeleteClick(alert)
         }
+
     }
 
     override fun getItemCount() = alerts.size
@@ -41,6 +45,15 @@ class AlertAdapter(
     fun removeAlert(position: Int) {
         alerts.removeAt(position)
         notifyItemRemoved(position)
+    }
+
+    fun updateData(it: List<Alert>?) {
+
+        alerts.clear()
+        if (it != null) {
+            alerts.addAll(it)
+        }
+        notifyDataSetChanged()
     }
 }
 

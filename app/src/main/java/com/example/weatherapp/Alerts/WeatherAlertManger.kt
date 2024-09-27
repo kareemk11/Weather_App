@@ -1,8 +1,5 @@
 package com.example.weatherapp.Alerts
 
-import android.app.AlarmManager
-import android.widget.EditText
-import java.text.SimpleDateFormat
 import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,7 +7,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.view.LayoutInflater
@@ -18,20 +14,30 @@ import android.view.ViewGroup
 import android.widget.DatePicker
 import android.widget.TimePicker
 import android.widget.Toast
+import androidx.compose.ui.text.font.FontVariation
 import androidx.core.app.NotificationCompat
-import com.example.weatherapp.R
-import com.google.android.material.switchmaterial.SwitchMaterial
-import java.util.*
-
+import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.myapp.utils.NotificationUtils
+import com.example.weatherapp.Model.Alert
+import com.example.weatherapp.R
+import com.example.weatherapp.app_utils.PermissionsUtils
+import com.google.android.material.switchmaterial.SwitchMaterial
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class WeatherAlertManager(private val context: Context) {
-    private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    //private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    private val notificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    private val activeAlerts = mutableMapOf<Int, WeatherAlert>()
+    //private val activeAlerts = mutableMapOf<Int, WeatherAlert>()
 
     data class WeatherAlert(
         val startTime: Long,
@@ -40,13 +46,13 @@ class WeatherAlertManager(private val context: Context) {
     )
 
 
-
-    fun showWeatherAlertDialog() {
+    fun showWeatherAlertDialog(viewModel: AlertsViewModel, onResult: (Alert?, Boolean) -> Unit) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_weather_alert, null)
 
         val datePicker = dialogView.findViewById<DatePicker>(R.id.date_picker)
         val timePicker = dialogView.findViewById<TimePicker>(R.id.start_time_picker)
-        val isNotificationSwitch = dialogView.findViewById<SwitchMaterial>(R.id.is_notification_switch)
+        val isNotificationSwitch =
+            dialogView.findViewById<SwitchMaterial>(R.id.is_notification_switch)
 
         timePicker.setIs24HourView(true)
 
@@ -57,39 +63,91 @@ class WeatherAlertManager(private val context: Context) {
             .setTitle("Set Weather Alert")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
-                // Get selected date
+
+
                 val selectedDate = Calendar.getInstance().apply {
                     set(datePicker.year, datePicker.month, datePicker.dayOfMonth)
                 }
 
-                val selectedTimeMillis = Calendar.getInstance().apply {
+                val selectedTime = Calendar.getInstance().apply {
                     timeInMillis = selectedDate.timeInMillis
                     set(Calendar.HOUR_OF_DAY, timePicker.hour)
                     set(Calendar.MINUTE, timePicker.minute)
-                }.timeInMillis
+                }
 
+                val selectedTimeMillis = selectedTime.timeInMillis
                 val currentTimeMillis = System.currentTimeMillis()
                 val isNotification = isNotificationSwitch.isChecked
+
 
                 val delayMillis = selectedTimeMillis - currentTimeMillis
 
                 if (delayMillis > 0) {
+                    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+
+                    val formattedDate = dateFormat.format(selectedDate.time)
+                    val formattedTime = timeFormat.format(selectedTime.time)
+
                     Log.d("WeatherAlert", "Scheduled alert in: $delayMillis ms")
-                    scheduleWeatherAlertTask(delayMillis, isNotification)
+
+                    CoroutineScope(Dispatchers.Main).launch{
+                    if (isNotification)  {
+                        NotificationUtils.checkAndPromptEnableNotifications(context)
+                    } else {
+                        PermissionsUtils.checkOverlayPermissionAndShowDialog(context)
+                    }
+                        Log.d("WeatherAlert", "Scheduled alert in: $delayMillis ms")
+                        scheduleWeatherAlertTask(delayMillis, isNotification, viewModel)
+                    }
+
+                    Log.d("WeatherAlert", "Scheduled alert for: $formattedDate at $formattedTime")
+                    val alert = Alert(
+                        alertDate = formattedDate,
+                        alertTime = formattedTime,
+                        alertType = if (isNotification) "Notification" else "Alarm",
+                        alertMessage = "Weather alert set for $formattedDate at $formattedTime"
+                    )
+                    onResult(alert, true)
                 } else {
-                    Toast.makeText(context, "Selected time must be in the future", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Selected time must be in the future",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    onResult(null, false)
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("Cancel") { _, _ ->
+                onResult(null, false)
+            }
             .create()
 
         dialog.show()
     }
 
 
-    fun scheduleWeatherAlertTask(delayMillis: Long, isNotification: Boolean) {
+    suspend fun scheduleWeatherAlertTask(
+        delayMillis: Long,
+        isNotification: Boolean,
+        viewModel: AlertsViewModel
+    ) {
+
+        val weatherDetails = viewModel.getWeatherDetailsFromDatabase(delayMillis)
+        val weatherDetailsString = weatherDetails?.description
+
+        val temperature = weatherDetails?.temp
+
+
+        val data = Data.Builder()
+            .putBoolean("isNotification", isNotification)
+            .putString("weatherDetails", weatherDetailsString)
+            .putDouble("temperature", temperature ?: 0.0)
+            .build()
+
         val workRequest = OneTimeWorkRequestBuilder<WeatherAlertWorker>()
             .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
+            .setInputData(data)
             .build()
 
         WorkManager.getInstance(context).enqueue(workRequest)
@@ -98,66 +156,17 @@ class WeatherAlertManager(private val context: Context) {
 
 
 
-    fun setWeatherAlert(startTime: Long, endTime: Long, isNotification: Boolean): Int {
-        val intent = Intent(context, WeatherAlertReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val requestCode = activeAlerts.size
-
-        alarmManager.setWindow(AlarmManager.RTC_WAKEUP, startTime, endTime - startTime, pendingIntent)
-        activeAlerts[requestCode] = WeatherAlert(startTime, endTime, isNotification)
-
-        if (isNotification) {
-            showNotification()
-        } else {
-            playAlarmSound(context)
-        }
-
-        return requestCode
-    }
+    fun showNotification(
+        weatherDetails: String,
+        temperature: String,
+        isNotification: Boolean
+    ) {
 
 
-    fun cancelWeatherAlert(requestCode: Int) {
-        val intent = Intent(context, WeatherAlertReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            requestCode,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        alarmManager.cancel(pendingIntent)
-        notificationManager.cancel(requestCode)
-        activeAlerts.remove(requestCode)
-    }
+        Log.d("WeatherAlert", "Weather details: $weatherDetails")
+        Log.d("WeatherAlert", "Temperature: $temperature")
 
-    private fun updateDateEditText(calendar: Calendar, editText: EditText) {
-        editText.setText(
-            "${calendar.get(Calendar.MONTH) + 1}/${calendar.get(Calendar.DAY_OF_MONTH)}/${calendar.get(Calendar.YEAR)}"
-        )
-    }
-
-    private fun updateTimeEditText(calendar: Calendar, editText: EditText) {
-        editText.setText(
-            "${calendar.get(Calendar.HOUR_OF_DAY)}:${calendar.get(Calendar.MINUTE)}"
-        )
-    }
-
-    private fun getTimeInMillis(dateEditText: EditText, timeEditText: EditText): Long {
-        val dateString = dateEditText.text.toString()
-        val timeString = timeEditText.text.toString()
-
-        val calendar = Calendar.getInstance()
-        val dateAndTime = "$dateString $timeString"
-        calendar.time = SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.getDefault()).parse(dateAndTime)
-        return calendar.timeInMillis
-    }
-
-    fun showNotification() {
+        var iconResId = 0
 
         val channelId = "weather_alert_channel"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -168,30 +177,81 @@ class WeatherAlertManager(private val context: Context) {
             ).apply {
                 enableVibration(true)
                 setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), null)
+                enableLights(true)
+
             }
             notificationManager.createNotificationChannel(channel)
         }
 
-        val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.logo)
-            .setContentTitle("Weather Alert")
-            .setContentText("A weather alert has been triggered.")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-            .build()
+        val dismissIntent = Intent(context, NotificationReceiver::class.java).apply {
+            action = "DISMISS_NOTIFICATION"
+            putExtra("isNotification", true)
+        }
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        if (weatherDetails.contains("rain")) {
+            iconResId = R.drawable.drop
+
+        } else if (weatherDetails.contains("snow")) {
+
+            iconResId = R.drawable.baseline_cloudy_snowing_24
+
+        } else if (weatherDetails.contains("clear")) {
+
+            iconResId = R.drawable.ultra_voilet
+
+        } else if (weatherDetails.contains("clouds")) {
+            iconResId = R.drawable.baseline_cloud_24
+        }
+        val notificationBuilder = NotificationCompat.Builder(context, channelId)
+        if (isNotification) {
+            notificationBuilder
+                .setSmallIcon(iconResId)
+                .setContentTitle("Weather Alert")
+                .setContentText("Weather details: $weatherDetails Temperature: $temperature")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .addAction(R.drawable.baseline_close_24, "Dismiss", dismissPendingIntent)
+                .setAutoCancel(true)
+        } else {
+
+            startAlarmOverlayService(weatherDetails, temperature)
+
+        }
+
+        val notification = notificationBuilder.build()
 
         notificationManager.notify(0, notification)
 
     }
 
-    fun playAlarmSound(context: Context?) {
-        val ringtoneUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-        val ringtone = RingtoneManager.getRingtone(context, ringtoneUri)
-        ringtone.play()
+    private fun startAlarmOverlayService(weatherDetails: String, temperature: String) {
+        val serviceIntent = Intent(context, AlarmOverlayService::class.java)
+        serviceIntent.putExtra("WeatherDetails", weatherDetails)
+        serviceIntent.putExtra("Temperature", temperature)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(serviceIntent)
+        } else {
+            context.startService(serviceIntent)
+        }
     }
 
 
 }
+
+
+//fun stopAlarm(context: Context, mediaPlayer: MediaPlayer) {
+//    mediaPlayer.stop()
+//    mediaPlayer.release()
+//
+//    val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+//    vibrator.cancel()
+//}
 
 class DateTimePickers(parent: ViewGroup) {
     private val datePicker: DatePicker
@@ -228,6 +288,76 @@ class DateTimePickers(parent: ViewGroup) {
 
     fun getTimeMillis(): Long = calendar.timeInMillis
 }
+
+/*
+ fun setWeatherAlert(startTime: Long, endTime: Long, isNotification: Boolean): Int {
+        val intent = Intent(context, NotificationReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val requestCode = activeAlerts.size
+
+        alarmManager.setWindow(
+            AlarmManager.RTC_WAKEUP,
+            startTime,
+            endTime - startTime,
+            pendingIntent
+        )
+        activeAlerts[requestCode] = WeatherAlert(startTime, endTime, isNotification)
+
+        if (isNotification) {
+            //showNotification()
+        } else {
+
+        }
+
+        return requestCode
+    }
+
+
+    fun cancelWeatherAlert(requestCode: Int) {
+        val intent = Intent(context, NotificationReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        alarmManager.cancel(pendingIntent)
+        notificationManager.cancel(requestCode)
+        activeAlerts.remove(requestCode)
+    }
+
+    private fun updateDateEditText(calendar: Calendar, editText: EditText) {
+        editText.setText(
+            "${calendar.get(Calendar.MONTH) + 1}/${calendar.get(Calendar.DAY_OF_MONTH)}/${
+                calendar.get(
+                    Calendar.YEAR
+                )
+            }"
+        )
+    }
+
+    private fun updateTimeEditText(calendar: Calendar, editText: EditText) {
+        editText.setText(
+            "${calendar.get(Calendar.HOUR_OF_DAY)}:${calendar.get(Calendar.MINUTE)}"
+        )
+    }
+
+    private fun getTimeInMillis(dateEditText: EditText, timeEditText: EditText): Long {
+        val dateString = dateEditText.text.toString()
+        val timeString = timeEditText.text.toString()
+
+        val calendar = Calendar.getInstance()
+        val dateAndTime = "$dateString $timeString"
+        calendar.time = SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.getDefault()).parse(dateAndTime)
+        return calendar.timeInMillis
+    }
+ */
 
 
 //The key changes in this update are:
