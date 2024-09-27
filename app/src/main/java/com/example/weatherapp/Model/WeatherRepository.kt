@@ -72,7 +72,7 @@ class WeatherRepository private constructor(
         return response
     }
 
-    suspend fun getAllAlerts(): List<Alert> {
+    suspend fun getAllAlerts(): Flow<List<Alert>> {
         return localDataSource.getAllAlerts()
     }
 
@@ -118,5 +118,10 @@ class WeatherRepository private constructor(
         localDataSource.insertForecast(forecast)
 
     }
+
+//    fun getAlerts(): List<Alert>? {
+//
+//
+//    }
 
 }

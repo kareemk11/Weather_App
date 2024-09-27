@@ -33,7 +33,7 @@ class WeatherLocalDataSource(
         alertDao.insertAlert(alert)
     }
 
-    suspend fun getAllAlerts(): List<Alert> {
+    suspend fun getAllAlerts(): Flow<List<Alert>> {
         return alertDao.getAllAlerts()
     }
 
