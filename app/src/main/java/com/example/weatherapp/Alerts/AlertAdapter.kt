@@ -30,7 +30,7 @@ class AlertAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val alert = alerts[position]
-        holder.dateTimeTextView.text = alert.alertDate + " " + alert.alertTime
+        "${alert.alertDate} at ${alert.alertTime}".also { holder.dateTimeTextView.text = it }
         holder.alertTextView.text = alert.alertType
 
         holder.deleteButton.setOnClickListener {
@@ -42,10 +42,7 @@ class AlertAdapter(
 
     override fun getItemCount() = alerts.size
 
-    fun removeAlert(position: Int) {
-        alerts.removeAt(position)
-        notifyItemRemoved(position)
-    }
+
 
     fun updateData(it: List<Alert>?) {
 
@@ -57,4 +54,3 @@ class AlertAdapter(
     }
 }
 
-data class AlertTemp(var dateTime: String, val message: String)

@@ -19,9 +19,9 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat.registerReceiver
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -29,8 +29,11 @@ import com.example.myapp.utils.NotificationUtils
 import com.example.weatherapp.BrodcastRecievers.LocationReceiver
 import com.example.weatherapp.MapActivity
 import com.example.weatherapp.Model.CurrentLocation
+import com.example.weatherapp.Model.CurrentWeatherState
 import com.example.weatherapp.Model.SettingsInPlace
+import com.example.weatherapp.Model.WeatherForecastState
 import com.example.weatherapp.Model.WeatherRepository
+import com.example.weatherapp.Model.WeatherResponse
 import com.example.weatherapp.Network.WeatherRemoteDataSource
 import com.example.weatherapp.Settings.setLocale
 import com.example.weatherapp.WeatherDatabase.WeatherDatabase
@@ -46,6 +49,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -77,7 +81,6 @@ class HomeFragment : Fragment() {
     private val formattedDateTime = currentDateTime.format(formatter)
 
 
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -103,14 +106,66 @@ class HomeFragment : Fragment() {
         viewModel = ViewModelProvider(this, viewModelFactory).get(HomeWeatherViewModel::class.java)
 
 
-        viewModel.weatherData.observe(viewLifecycleOwner) {
-            updateUI()
+        lifecycleScope.launch {
+            viewModel.weatherData.collect { state ->
+                when (state) {
+
+                    is CurrentWeatherState.Loading -> {
+                        binding.progressBar2.visibility = View.VISIBLE
+                    }
+
+                    is CurrentWeatherState.Success -> {
+                        binding.progressBar2.visibility = View.GONE
+                        updateUI(state.currentWeatherResponse)
+                    }
+
+                    is CurrentWeatherState.Error -> {
+                        binding.progressBar2.visibility = View.GONE
+                        Toast.makeText(requireContext(), state.errorMessage, Toast.LENGTH_SHORT)
+                            .show()
+                        viewModel.getWeatherDateFromLocal()
+                    }
+                }
+            }
         }
 
-        viewModel.forecastData.observe(viewLifecycleOwner) {
-            adapter.updateData(FilterUtils.filterCurrentDayData(it))
-            adapterForecast.updateData(FilterUtils.filterDailyData(it))
+
+        lifecycleScope.launch {
+            viewModel.forecastData.collect { state ->
+                when (state) {
+                    is WeatherForecastState.Loading -> {
+                        binding.progressBar2.visibility = View.VISIBLE
+                    }
+
+                    is WeatherForecastState.Success -> {
+                        binding.progressBar2.visibility = View.GONE
+                        if (state.forecastResponse?.list?.isNotEmpty() == true) {
+                            adapter.updateData(FilterUtils.filterCurrentDayData(state.forecastResponse))
+                            adapterForecast.updateData(FilterUtils.filterDailyData(state.forecastResponse))
+                        }
+                    }
+
+                    is WeatherForecastState.Error -> {
+                        binding.progressBar2.visibility = View.GONE
+                        Toast.makeText(requireContext(), state.errorMessage, Toast.LENGTH_SHORT)
+                            .show()
+
+                        viewModel.getForecastDataFromLocal()
+
+                    }
+                }
+
+            }
         }
+
+//        viewModel.weatherData.observe(viewLifecycleOwner) {
+//            updateUI()
+//        }
+//
+//        viewModel.forecastData.observe(viewLifecycleOwner) {
+//            adapter.updateData(FilterUtils.filterCurrentDayData(it))
+//            adapterForecast.updateData(FilterUtils.filterDailyData(it))
+//        }
         binding.fabChangeLocation.setOnClickListener {
             val intent = Intent(activity, MapActivity::class.java)
             intent.putExtra("isFavourite", false)
@@ -127,6 +182,7 @@ class HomeFragment : Fragment() {
         val intentFilter = IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION)
         requireActivity().registerReceiver(locationReceiver, intentFilter)
     }
+
     override fun onPause() {
         super.onPause()
         requireActivity().unregisterReceiver(locationReceiver)
@@ -179,12 +235,12 @@ class HomeFragment : Fragment() {
             val latitude = sharedPreferences.getFloat("latitude", -1.0f)
             val longitude = sharedPreferences.getFloat("longitude", -1.0f)
             if (latitude != -1.0f && longitude != -1.0f) {
-                if(InternetConnectionUtil.isInternetAvailable(requireContext()))
-                {
+                if (InternetConnectionUtil.isInternetAvailable(requireContext())) {
                     viewModel.fetchWeatherData(latitude.toDouble(), longitude.toDouble())
                     viewModel.fetchForecastData(latitude.toDouble(), longitude.toDouble())
                 } else {
-                    Toast.makeText(requireContext(), "No Internet Connection", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "No Internet Connection", Toast.LENGTH_SHORT)
+                        .show()
                     // Handle the case when there is no internet connection get data from local database
                     viewModel.getWeatherDateFromLocal()
                     viewModel.getForecastDataFromLocal()
@@ -231,7 +287,7 @@ class HomeFragment : Fragment() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    checkIfLocationEnabled()
+                checkIfLocationEnabled()
                 Log.i(TAG, "onRequestPermissionsResult: ")
             } else {
                 Toast.makeText(
@@ -258,8 +314,7 @@ class HomeFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     private fun getFreshLocation() {
-        if(InternetConnectionUtil.isInternetAvailable(requireContext()))
-        {
+        if (InternetConnectionUtil.isInternetAvailable(requireContext())) {
             fusedLocationProviderClient =
                 LocationServices.getFusedLocationProviderClient(requireActivity())
             fusedLocationProviderClient.requestLocationUpdates(
@@ -335,7 +390,6 @@ class HomeFragment : Fragment() {
     }
 
 
-
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -346,43 +400,40 @@ class HomeFragment : Fragment() {
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun updateUI() {
-        if (SettingsInPlace.unit == "metric") {
-            binding.tvTemperature.text = "${viewModel.weatherData.value?.main?.temp?.toInt()}°C"
-            binding.tvMaxTemp.text = "${viewModel.weatherData.value?.main?.temp_max?.toInt()}°C"
-            binding.tvMinTemp.text = "${viewModel.weatherData.value?.main?.temp_min?.toInt()}°C"
-            binding.tvWindValue.text = "${viewModel.weatherData.value?.wind?.speed.toString()} m/s"
-        } else if (SettingsInPlace.unit == "imperial") {
-            binding.tvTemperature.text = "${viewModel.weatherData.value?.main?.temp?.toInt()}°F"
-            binding.tvMaxTemp.text = "${viewModel.weatherData.value?.main?.temp_max?.toInt()}°F"
-            binding.tvMinTemp.text = "${viewModel.weatherData.value?.main?.temp_min?.toInt()}°F"
-            binding.tvWindValue.text = "${viewModel.weatherData.value?.wind?.speed.toString()} m/h"
-        } else {
-            binding.tvTemperature.text = "${viewModel.weatherData.value?.main?.temp?.toInt()}°K"
-            binding.tvMaxTemp.text = "${viewModel.weatherData.value?.main?.temp_max?.toInt()}°K"
-            binding.tvMinTemp.text = "${viewModel.weatherData.value?.main?.temp_min?.toInt()}°K"
-            binding.tvWindValue.text = "${viewModel.weatherData.value?.wind?.speed.toString()} m/s"
-        }
+    private fun updateUI(
+        weather: WeatherResponse?
+    ) {
+        if (weather != null) {
+            if (SettingsInPlace.unit == "metric") {
+                binding.tvTemperature.text = "${weather.main?.temp?.toInt()}°C"
+                binding.tvMaxTemp.text = "${weather.main?.temp_max?.toInt()}°C"
+                binding.tvMinTemp.text = "${weather.main?.temp_min?.toInt()}°C"
+                binding.tvWindValue.text = "${weather.wind?.speed.toString()} m/s"
+            } else if (SettingsInPlace.unit == "imperial") {
+                binding.tvTemperature.text = "${weather.main?.temp?.toInt()}°F"
+                binding.tvMaxTemp.text = "${weather.main?.temp_max?.toInt()}°F"
+                binding.tvMinTemp.text = "${weather.main?.temp_min?.toInt()}°F"
+                binding.tvWindValue.text = "${weather.wind?.speed.toString()} m/h"
+            } else {
+                binding.tvTemperature.text = "${weather.main?.temp?.toInt()}°K"
+                binding.tvMaxTemp.text = "${weather.main?.temp_max?.toInt()}°K"
+                binding.tvMinTemp.text = "${weather.main?.temp_min?.toInt()}°K"
+                binding.tvWindValue.text = "${weather.wind?.speed.toString()} m/s"
+            }
 
-        binding.tvCityName.text = viewModel.weatherData.value?.name
-        binding.tvDateTime.text = formattedDateTime
-        binding.tvWeatherDescription.text =
-            viewModel.weatherData.value?.weather?.get(0)?.description
+            binding.tvCityName.text = weather.name
+            binding.tvDateTime.text = formattedDateTime
+            binding.tvWeatherDescription.text = weather.weather?.get(0)?.description
 
-        "${viewModel.weatherData.value?.visibility.toString()} m".also {
-            binding.tvVisibilityValue.text = it
-        }
-        "${viewModel.weatherData.value?.main?.humidity}%".also { binding.tvHumidityValue.text = it }
-        "${viewModel.weatherData.value?.main?.pressure.toString()} hPa".also {
-            binding.tvPressureValue.text = it
-        }
-        "${viewModel.weatherData.value?.clouds?.all.toString()}%".also {
-            binding.tvCloudsValue.text = it
-        }
+            binding.tvVisibilityValue.text = "${weather.visibility.toString()} m"
+            binding.tvHumidityValue.text = "${weather.main?.humidity}%"
+            binding.tvPressureValue.text = "${weather.main?.pressure.toString()} hPa"
+            binding.tvCloudsValue.text = "${weather.clouds?.all.toString()}%"
 
-        val iconUrl =
-            "https://openweathermap.org/img/wn/${viewModel.weatherData.value?.weather?.get(0)?.icon}@2x.png"
-        Glide.with(this).load(iconUrl).into(binding.ivWeatherIcon)
+            val iconUrl =
+                "https://openweathermap.org/img/wn/${weather.weather?.get(0)?.icon}@2x.png"
+            Glide.with(this).load(iconUrl).into(binding.ivWeatherIcon)
+        }
     }
 
     private fun hideAllViews() {
@@ -417,154 +468,4 @@ class HomeFragment : Fragment() {
 
 
     }
-//
-//    fun broadcastReceiver() {
-//        locationReceiver = object : BroadcastReceiver() {
-//            override fun onReceive(context: Context, intent: Intent?) {
-//                if (intent?.action == LocationManager.PROVIDERS_CHANGED_ACTION) {
-//                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-//                    val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-//                    val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-//
-//                    if (!isGpsEnabled && !isNetworkEnabled) {
-//                        Toast.makeText(context, "Location services are disabled", Toast.LENGTH_SHORT).show()
-//                    } else {
-//                        Toast.makeText(context, "Location services are enabled", Toast.LENGTH_SHORT).show()
-//                    }
-//                }
-//            }
-//        }
-//    }
-
 }
-
-
-//private fun fetchLocation() {
-//    if (LocationUtils.isLocationEnabled(requireContext())) {
-//        LocationUtils.getFreshLocation(requireActivity() as AppCompatActivity, viewModel) { lat, lon ->
-//
-//            CurrentLocation.latitude = lat
-//            CurrentLocation.longitude = lon
-//            viewModel.fetchWeatherData()
-//            viewModel.fetchForecastData()
-//
-//            Log.i(TAG, "Updated Location: Lat: $lat, Lon: $lon")
-//        }
-//    } else {
-//        LocationUtils.enableLocation(requireContext())
-//    }
-//}
-
-
-//    private fun showLocationPermissionExplanation() {
-////        AlertDialog.Builder(requireContext())
-////            .setTitle("Location Permission Required")
-////            .setMessage("We need location permission to provide accurate weather information for your area.")
-////            .setPositiveButton("Grant Permission") { _, _ ->
-////                requestLocationPermission()
-////            }
-////            .setNegativeButton("Cancel") { dialog, _ ->
-////                dialog.dismiss()
-////                // Handle the case when the user doesn't grant permission
-////                handlePermissionDenied()
-////            }
-////            .show()
-////    }
-//
-//
-//    companion object {
-//        private const val LOCATION_PERMISSION_REQUEST_CODE = 101
-//    }
-//
-//    private fun handleLocationDisabled() {
-//        // Implement fallback behavior when location is disabled
-//        // For example, ask the user to enter a location manually
-//    }
-//
-//    private fun handlePermissionDenied() {
-//        // Implement fallback behavior when permission is denied
-//        // For example, ask the user to enter a location manually
-//    }
-//
-//
-//    private fun getAddressFromLocation(latitude: Double, longitude: Double) {
-//        val geocoder = Geocoder(requireActivity(), Locale.getDefault())
-//        try {
-//            val addresses: List<Address>? = geocoder.getFromLocation(latitude, longitude, 1)
-//            if (addresses != null && addresses.isNotEmpty()) {
-//                val address: Address = addresses[0]
-//                val addressLine: String = address.getAddressLine(0)
-//
-//
-//            } else {
-//
-//            }
-//        } catch (e: IOException) {
-//            e.printStackTrace()
-//
-//        }
-//    }
-
-
-//private fun promptEnableLocation() {
-//    AlertDialog.Builder(requireContext())
-//        .setTitle("Location Services Not Enabled")
-//        .setMessage("Please enable location services to get weather updates for your current location.")
-//        .setPositiveButton("Enable") { _, _ ->
-//            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-//            startActivityForResult(intent, LOCATION_SETTINGS_REQUEST)
-//        }
-//        .setNegativeButton("Use Default Location") { _, _ ->
-//            useDefaultLocation()
-//        }
-//        .show()
-//}
-
-//private fun useDefaultLocation() {
-//
-//        CurrentLocation.latitude = 40.7128
-//        CurrentLocation.longitude = -74.0060
-//        updateWeather()
-//    }
-//
-//    private fun updateWeather() {
-//        viewModel.fetchWeatherData()
-//        viewModel.fetchForecastData()
-//    }
-
-
-/*
-      if (settings.locationMethod == "GPS") {
-           binding.fabChangeLocation.visibility = View.GONE
-           if (checkLocationPermission()) {
-               if (isLocationEnabled()) {
-                   getFreshLocation()
-               } else {
-                   enableLocation()
-               }
-           } else {
-               ActivityCompat.requestPermissions(
-                   requireActivity(),
-                   arrayOf(
-                       android.Manifest.permission.ACCESS_FINE_LOCATION,
-                       android.Manifest.permission.ACCESS_COARSE_LOCATION
-                   ), LOCATION_PERMISSION_REQUEST_CODE
-               )
-           }
-       } else {
-           binding.fabChangeLocation.visibility = View.VISIBLE
-           val sharedPreferences =
-               requireContext().getSharedPreferences("map_preferences", Context.MODE_PRIVATE)
-           val latitude = sharedPreferences.getFloat("latitude", -1.0f)
-           val longitude = sharedPreferences.getFloat("longitude", -1.0f)
-           if (latitude != -1.0f && longitude != -1.0f) {
-               CurrentLocation.latitude = latitude.toDouble()
-               CurrentLocation.longitude = longitude.toDouble()
-               viewModel.fetchWeatherData()
-               viewModel.fetchForecastData()
-           } else {
-               startActivity(Intent(requireContext(), MapActivity::class.java))
-           }
-       }
-
-    */

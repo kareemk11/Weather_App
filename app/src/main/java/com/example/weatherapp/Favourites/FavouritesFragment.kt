@@ -54,19 +54,16 @@ class FavouritesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
 
-        // Add Favourite Button
         binding.addFavoriteButton.setOnClickListener {
             val intent = Intent(activity, MapActivity::class.java)
             intent.putExtra("isFavourite", true)
             startActivity(intent)
         }
 
-        // Observe Favourites LiveData and Update Adapter
         favouritesViewModel.favourites.observe(viewLifecycleOwner) { favourites ->
             favouritesAdapter.updateData(favourites)
         }
 
-        // Fetch initial favourites
         favouritesViewModel.fetchFavourites()
     }
 
@@ -110,30 +107,3 @@ class FavouritesFragment : Fragment() {
     }
 }
 
-//private fun showDeleteAlert(title: String, message: String, favouriteWeatherObject: FavouriteWeatherObject) {
-//        val dialog = AlertDialog.Builder(requireContext())
-//            .setTitle(title)
-//            .setMessage(message)
-//            .setPositiveButton("Delete") { _, _ ->
-//                onDeleteConfirmed(true, favouriteWeatherObject)
-//            }
-//            .setNegativeButton("Cancel") { dialog, _ ->
-//                dialog.dismiss()
-//                onDeleteConfirmed(false, favouriteWeatherObject)
-//            }
-//            .setOnCancelListener {
-//                onDeleteConfirmed(false,favouriteWeatherObject)
-//            }
-//            .create()
-//
-//        dialog.show()
-//    }
-//
-//    private fun onDeleteConfirmed(isDeleted: Boolean, favouriteWeatherObject: FavouriteWeatherObject) {
-//        if (isDeleted) {
-//            Toast.makeText(requireContext(), "Item deleted", Toast.LENGTH_SHORT).show()
-//            TempRepo.removeFavourite(favouriteWeatherObject)
-//        } else {
-//            Toast.makeText(requireContext(), "Action canceled", Toast.LENGTH_SHORT).show()
-//        }
-//    }
