@@ -37,7 +37,8 @@ data class Alert(
     val alertMessage: String,
     val alertType: String,
     val alertDate: String,
-    val alertTime: String
+    val alertTime: String,
+    var workManagerId: String? = null
 )
 
 @Entity

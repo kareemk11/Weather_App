@@ -112,6 +112,7 @@ class AlarmOverlayService : Service() {
             overlayView = null
         }
         stopSelf()
+        stopForeground(true)
 
     }
 
@@ -134,8 +135,16 @@ class AlarmOverlayService : Service() {
                 setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), null)
                 enableLights(true)
             }
-            notificationManager.createNotificationChannel(channel)
+
+            val existingChannels = notificationManager.notificationChannels
+            val channelExists = existingChannels.any { it.id == channelId }
+            if (!channelExists) {
+                notificationManager.createNotificationChannel(channel)
+            }
+
         }
+            //notificationManager.createNotificationChannel(channel)
+
 
         val dismissIntent = Intent(this, NotificationReceiver::class.java).apply {
             action = "DISMISS_NOTIFICATION"
@@ -153,8 +162,27 @@ class AlarmOverlayService : Service() {
             .setContentTitle("Weather Alert")
             .setContentText("Weather details: $weatherDetails Temperature: $temperature")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .addAction(R.drawable.baseline_close_24, "Dismiss", dismissPendingIntent)
+            .setAutoCancel(true)
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
             .build()
+        /*
+        notificationBuilder
+                .setSmallIcon(iconResId)
+                .setContentTitle("Weather Alert")
+                .setContentText("Weather details: $weatherDetails Temperature: $temperature")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .addAction(R.drawable.baseline_close_24, "Dismiss", dismissPendingIntent)
+                .setAutoCancel(true)notificationBuilder
+                .setSmallIcon(iconResId)
+                .setContentTitle("Weather Alert")
+                .setContentText("Weather details: $weatherDetails Temperature: $temperature")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .addAction(R.drawable.baseline_close_24, "Dismiss", dismissPendingIntent)
+                .setAutoCancel(true)
+         */
     }
 
 

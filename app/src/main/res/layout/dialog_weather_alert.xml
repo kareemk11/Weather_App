@@ -12,7 +12,6 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Date Picker -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -24,7 +23,6 @@
             android:layout_height="wrap_content"
             android:calendarViewShown="true" />
 
-        <!-- Start Time Picker -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -37,12 +35,24 @@
             android:timePickerMode="spinner" />
 
 
-        <!-- Switch for Notification -->
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/is_notification_switch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Enable Notification" />
+        <RadioGroup
+            android:id="@+id/alert_type_radio_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/radio_alert"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Alert"/>
+
+            <RadioButton
+                android:id="@+id/radio_notification"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Notification"/>
+
+        </RadioGroup>
     </LinearLayout>
 
 </ScrollView>

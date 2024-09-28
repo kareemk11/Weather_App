@@ -24,8 +24,12 @@ class WeatherLocalDataSource(
         forecastDao.deleteAllForecasts()
     }
 
-    suspend fun getForecastByWeatherID(currentWeatherId: Int): List<ForecastLocal> {
+    suspend fun getForecastByWeatherID(currentWeatherId: Int): Flow<List<ForecastLocal>> {
         return forecastDao.getForecastByWeatherID(currentWeatherId)
+    }
+
+    suspend fun getForecastDetails(): List<ForecastLocal> {
+        return forecastDao.getForecastDetails()
     }
 
     // Alert Methods
@@ -39,6 +43,10 @@ class WeatherLocalDataSource(
 
     suspend fun deleteAlert(id : Int) {
         alertDao.deleteAlertById(id)
+    }
+
+    suspend fun deleteAlertByWorkManagerId(workManagerId: String) {
+        alertDao.deleteAlertByWorkManagerId(workManagerId)
     }
 
     // Current Weather Methods
@@ -74,5 +82,7 @@ class WeatherLocalDataSource(
         currentWeatherDao.insertCurrentWeather(favourite)
 
     }
+
+
 
 }

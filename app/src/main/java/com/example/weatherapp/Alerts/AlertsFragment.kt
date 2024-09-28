@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.work.WorkManager
 import com.example.weatherapp.Model.Alert
 import com.example.weatherapp.Model.WeatherRepository
 import com.example.weatherapp.Network.WeatherRemoteDataSource
@@ -49,31 +50,17 @@ class AlertsFragment : Fragment() {
 
     //    private var selectedDate: Calendar = Calendar.getInstance()
 //    private var notificationType: String = "notification"
-    private val alerts = mutableListOf(
-        AlertTemp("2023-09-23 15:30", "This is the first alert."),
-        AlertTemp("2023-09-24 09:15", "This is another important notification."),
-        AlertTemp("2023-09-25 18:45", "Reminder: Don't forget to bring your umbrella!"),
-    )
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d("AlertsFragment", "Alerts: $alerts")
 
         floatingActionButton = view.findViewById(R.id.addAlertFab)
         floatingActionButton.setOnClickListener {
 
 
             Log.d("AlertsFragment", "FloatingActionButton clicked")
-            weatherAlertManager.showWeatherAlertDialog (viewModel){ alert, success ->
-                if (success) {
-                    if (alert != null) {
-                        viewModel.insertAlert(alert)
-                    }
-                    Log.d("Alert", "Alert set: $alert")
-                } else {
-                    Log.d("Alert", "Dialog was canceled or invalid time")
-                }
-            }
+            weatherAlertManager.showWeatherAlertDialog (viewModel)
 
         }
         alertsRecyclerView = view.findViewById(R.id.alertsRecyclerView)
@@ -89,7 +76,6 @@ class AlertsFragment : Fragment() {
 
         alertAdapter = AlertAdapter(emptyList<Alert>().toMutableList()) { alert ->
 
-            Log.d("AlertsFragment", "Alert deleted at position: $alert")
 
             CoroutineScope(Dispatchers.Main).launch {
                 Log.d("AlertsFragment", "Alert deleted at position: $alert")
@@ -99,7 +85,8 @@ class AlertsFragment : Fragment() {
                     message = "Are you sure you want to delete item from alerts?"
                 )
                 if (result) {
-                    viewModel.deleteAlert(alert)
+                    viewModel.deleteAlert(alert,WorkManager.getInstance(requireContext()) )
+
                     Toast.makeText(requireContext(), "Item deleted", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(requireContext(), "Action canceled", Toast.LENGTH_SHORT).show()

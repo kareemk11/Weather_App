@@ -1,6 +1,9 @@
 package com.example.weatherapp.MainActivity
 
+import android.content.IntentFilter
+import android.net.ConnectivityManager
 import android.os.Bundle
+import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -12,6 +15,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import com.example.weatherapp.BrodcastRecievers.InternetConnectivityReceiver
 import com.example.weatherapp.Model.SettingsInPlace.PREF_NAME
 import com.example.weatherapp.R
 import com.example.weatherapp.Settings.setLocale
@@ -25,12 +29,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var toolbarTitle: TextView
+    private lateinit var broadReceiver: InternetConnectivityReceiver
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         loadSettingsAndApplyLocale()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+
 
         drawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
@@ -64,6 +71,9 @@ class MainActivity : AppCompatActivity() {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             toolbarTitle.text = destination.label?.toString() ?: getString(R.string.app_name)
         }
+
+         broadReceiver = InternetConnectivityReceiver(rootView = drawerLayout)
+
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -91,6 +101,19 @@ class MainActivity : AppCompatActivity() {
         finish()
         startActivity(intent)
 
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        registerReceiver(broadReceiver, intentFilter)
+
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unregisterReceiver(broadReceiver)
     }
 }
 

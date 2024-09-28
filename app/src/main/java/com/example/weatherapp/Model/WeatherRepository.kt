@@ -1,5 +1,6 @@
 package com.example.weatherapp.Model
 
+import android.util.Log
 import com.example.weatherapp.Network.WeatherRemoteDataSource
 import com.example.weatherapp.WeatherDatabase.WeatherLocalDataSource
 import kotlinx.coroutines.flow.Flow
@@ -33,7 +34,6 @@ class WeatherRepository private constructor(
         isFavourite: Boolean = false
     ): Response<WeatherResponse> {
         val response = remoteDataSource.getCurrentWeather(latitude, longitude, units, lang)
-        if (response.isSuccessful) {
             if (!isFavourite) {
                 response.body()?.let { weatherResponse ->
                     val currentWeather = weatherResponse.toCurrentWeather(
@@ -44,7 +44,7 @@ class WeatherRepository private constructor(
                     localDataSource.insertCurrentWeather(currentWeather)
                 }
             }
-        }
+
 
         return response
 
@@ -84,9 +84,18 @@ class WeatherRepository private constructor(
         localDataSource.deleteAlert(alert.id)
     }
 
+    suspend fun deleteAlertByWorkManagerId(workManagerId: String) {
+        Log.d("WeatherRepository", "Deleting alert with workManagerId: $workManagerId")
+        localDataSource.deleteAlertByWorkManagerId(workManagerId)
+    }
 
-    suspend fun getForecastByWeatherID(currentWeatherId: Int): List<ForecastLocal> {
+
+    suspend fun getForecastByWeatherID(currentWeatherId: Int): Flow<List<ForecastLocal>> {
         return localDataSource.getForecastByWeatherID(currentWeatherId)
+    }
+
+    suspend fun getForecastDetails():List<ForecastLocal>{
+        return localDataSource.getForecastDetails()
     }
 
     /*

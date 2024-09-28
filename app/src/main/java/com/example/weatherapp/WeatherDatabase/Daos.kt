@@ -21,7 +21,10 @@ interface ForecastDao {
     suspend fun deleteAllForecasts()
 
     @Query("SELECT * FROM ForecastLocal WHERE currentWeatherId = :currentWeatherId")
-    suspend fun getForecastByWeatherID(currentWeatherId: Int): List<ForecastLocal>
+     fun getForecastByWeatherID(currentWeatherId: Int): Flow<List<ForecastLocal>>
+
+     @Query("SELECT * FROM ForecastLocal WHERE currentWeatherId = 1")
+     suspend fun getForecastDetails(): List<ForecastLocal>
 }
 
 
@@ -36,6 +39,9 @@ interface AlertDao {
 
     @Query("DELETE FROM Alert WHERE id = :alertId")
     suspend fun deleteAlertById(alertId: Int)
+
+    @Query("DELETE FROM Alert WHERE workManagerId = :workManagerId")
+    suspend fun deleteAlertByWorkManagerId(workManagerId: String)
 }
 
 @Dao

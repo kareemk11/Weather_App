@@ -4,12 +4,14 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.weatherapp.Model.Alert
 import com.example.weatherapp.Model.CurrentWeather
 import com.example.weatherapp.Model.ForecastLocal
 
 
-@Database(entities = [ForecastLocal::class, Alert::class, CurrentWeather::class], version = 1, exportSchema = false)
+@Database(entities = [ForecastLocal::class, Alert::class, CurrentWeather::class], version = 2, exportSchema = false)
 abstract class WeatherDatabase : RoomDatabase() {
 
     abstract fun forecastDao(): ForecastDao
@@ -19,6 +21,15 @@ abstract class WeatherDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: WeatherDatabase? = null
+
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE Alert ADD COLUMN workManagerId TEXT")
+            }
+        }
+
+
+
         fun getInstance(ctx: Context): WeatherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -26,7 +37,7 @@ abstract class WeatherDatabase : RoomDatabase() {
                     WeatherDatabase::class.java,
                     "weather_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(MIGRATION_1_2)
                     .build()
 
                 INSTANCE = instance

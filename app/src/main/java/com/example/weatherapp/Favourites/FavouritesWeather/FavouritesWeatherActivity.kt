@@ -7,6 +7,7 @@ import android.widget.ProgressBar
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -15,14 +16,18 @@ import com.example.weatherapp.Favourites.FavouritesViewModelFactory
 import com.example.weatherapp.Home.ForecastAdapter
 import com.example.weatherapp.Home.WeatherAdapter
 import com.example.weatherapp.Model.CurrentWeather
+import com.example.weatherapp.Model.CurrentWeatherState
 import com.example.weatherapp.Model.SettingsInPlace
+import com.example.weatherapp.Model.WeatherForecastState
 import com.example.weatherapp.Model.WeatherRepository
+import com.example.weatherapp.Model.WeatherResponse
 import com.example.weatherapp.Network.WeatherRemoteDataSource
 import com.example.weatherapp.WeatherDatabase.WeatherDatabase
 import com.example.weatherapp.WeatherDatabase.WeatherLocalDataSource
 import com.example.weatherapp.app_utils.FilterUtils
 import com.example.weatherapp.app_utils.InternetConnectionUtil
 import com.example.weatherapp.databinding.ActivityFavouritesWeatherBinding
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -80,17 +85,58 @@ class FavouritesWeatherActivity : AppCompatActivity() {
 
 
 
+        lifecycleScope.launch {
 
-        viewModel.weather.observe(this) {
-            updateUI()
-        }
+            viewModel.weather.collect {state->
+                when (state) {
+                    is CurrentWeatherState.Loading -> {
+                        binding.progressBar.visibility = ProgressBar.VISIBLE
+                    }
+                    is CurrentWeatherState.Success -> {
+                        binding.progressBar.visibility = ProgressBar.GONE
+                        updateUI(state.currentWeatherResponse)
+                    }
+                    is CurrentWeatherState.Error -> {
+                        binding.progressBar.visibility = ProgressBar.GONE
+                        viewModel.getFavouriteWeatherDateFromLocal(fav)
 
-        viewModel.forecast.observe(this) {
-            if (it.list.isNotEmpty()) {
-                adapter.updateData(FilterUtils.filterCurrentDayData(it))
-                adapterForecast.updateData(FilterUtils.filterDailyData(it))
+                    }
+                }
+
             }
         }
+
+        lifecycleScope.launch {
+            viewModel.forecast.collect { state ->
+
+                when (state) {
+                    is WeatherForecastState.Loading -> {
+                        binding.progressBar.visibility = ProgressBar.VISIBLE
+                    }
+                    is WeatherForecastState.Success -> {
+                        binding.progressBar.visibility = ProgressBar.GONE
+                        if (state.forecastResponse?.list?.isNotEmpty() == true) {
+                            adapter.updateData(FilterUtils.filterCurrentDayData(state.forecastResponse))
+                            adapterForecast.updateData(FilterUtils.filterDailyData(state.forecastResponse))
+                        }
+
+                    }
+                    is WeatherForecastState.Error -> {
+                        binding.progressBar.visibility = ProgressBar.GONE
+                        viewModel.getFavouriteForecastDataFromLocal(fav.id)
+                    }
+                }
+            }
+        }
+
+
+
+//        viewModel.forecast.observe(this) {
+//            if (it.list.isNotEmpty()) {
+//                adapter.updateData(FilterUtils.filterCurrentDayData(it))
+//                adapterForecast.updateData(FilterUtils.filterDailyData(it))
+//            }
+//        }
     }
 
     private fun setupRecyclerViews() {
@@ -110,8 +156,8 @@ class FavouritesWeatherActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun updateUI() {
-        val weather = viewModel.weather.value
+    private fun updateUI(weather: WeatherResponse?) {
+        // Update UI with weather data //val weather = viewModel.weather.value.currentWeatherResponse
         if (weather != null) {
             if (SettingsInPlace.unit == "metric") {
                 binding.tvTemperature.text = "${weather.main?.temp?.toInt()}°C"
