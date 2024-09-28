@@ -50,7 +50,7 @@ class AlarmOverlayService : Service() {
     }
 
     private fun showAlarmOverlay(intent: Intent) {
-        if (overlayView != null) return // Prevent adding multiple overlays
+        if (overlayView != null) return
 
         val layoutInflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         overlayView = layoutInflater.inflate(R.layout.alarm_layout, null)

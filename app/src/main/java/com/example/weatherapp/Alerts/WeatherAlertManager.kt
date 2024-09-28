@@ -36,9 +36,6 @@ class WeatherAlertManager(private val context: Context) {
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
 
-
-
-
     fun showWeatherAlertDialog(viewModel: AlertsViewModel) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_weather_alert, null)
 
@@ -94,7 +91,6 @@ class WeatherAlertManager(private val context: Context) {
                     val formattedDate = dateFormat.format(selectedDate.time)
                     val formattedTime = timeFormat.format(selectedTime.time)
 
-                    Log.d("WeatherAlert", "Scheduled alert in: $delayMillis ms")
 
                     CoroutineScope(Dispatchers.Main).launch {
                         if (isNotification) {
@@ -112,7 +108,6 @@ class WeatherAlertManager(private val context: Context) {
                         scheduleWeatherAlertTask(delayMillis, isNotification, viewModel, alert)
                     }
 
-                    Log.d("WeatherAlert", "Scheduled alert for: $formattedDate at $formattedTime")
 
                 } else {
                     Toast.makeText(context, "Selected time must be in the future", Toast.LENGTH_SHORT).show()
@@ -139,10 +134,6 @@ class WeatherAlertManager(private val context: Context) {
         val weatherDetailsString = weatherDetails?.description
 
         val temperature = weatherDetails?.temp
-
-
-        Log.d("WeatherAlert", "Weather details: $weatherDetailsString")
-        Log.d("WeatherAlert", "Temperature: $temperature")
 
         val data = Data.Builder()
             .putBoolean("isNotification", isNotification)
@@ -173,10 +164,6 @@ class WeatherAlertManager(private val context: Context) {
         temperature: String,
         isNotification: Boolean
     ) {
-
-
-        Log.d("WeatherAlert", "Weather details: $weatherDetails")
-        Log.d("WeatherAlert", "Temperature: $temperature")
 
         var iconResId = 0
 
@@ -247,9 +234,6 @@ class WeatherAlertManager(private val context: Context) {
     }
 
     private fun startAlarmOverlayService(weatherDetails: String, temperature: String) {
-
-        Log.d("WeatherAlert", "Weather details: $weatherDetails")
-        Log.d("WeatherAlert", "Temperature: $temperature")
 
         val serviceIntent = Intent(context, AlarmOverlayService::class.java)
         serviceIntent.putExtra("WeatherDetails", weatherDetails)

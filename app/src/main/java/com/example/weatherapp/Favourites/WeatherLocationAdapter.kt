@@ -56,6 +56,3 @@ class WeatherLocationAdapter(
         Log.i("WeatherLocationAdapter", "updateData: $favouriteWeatherLocations")
     }
 }
-
-
-data class FavouriteWeatherObject(val name: String, val latitude: Double, val longitude: Double):Serializable
