@@ -51,7 +51,7 @@
     <string name="english">English</string>
     <string name="units">Units</string>
     <string name="meters_per_second_m_s_celsius">Meters per second (m/s) / Celsius</string>
-    <string name="miles_per_hour_mph_celsius">Miles per hour (mph) / Celsius</string>
+    <string name="miles_per_hour_mph_celsius">Miles per hour (mph) / Fahrenheit</string>
     <string name="meters_per_second_m_s_kelvin">Meters per second (m/s) / Kelvin</string>
     <string name="title">Title</string>
     <string name="location_enabled">Location Ena\nbled</string>
@@ -63,4 +63,13 @@
     <string name="confirm_location">Confirm Location</string>
     <string name="notifications_disabled">Notifications are disabled, please enable them in settings.</string>
     <string name="notifications_enabled">Notifications are enabled.</string>
+    <string name="weather_alert">Weather Alert!</string>
+    <string name="heavy_rain_expected">Heavy rain expected</string>
+    <string name="_22_c">22°C</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="delete_alert">Delete alert</string>
+    <string name="select_date">Select Date</string>
+    <string name="start_time">Start Time</string>
+    <string name="alert">Alert</string>
+    <string name="notification">Notification</string>
 </resources>

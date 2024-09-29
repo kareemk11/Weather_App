@@ -2,6 +2,8 @@ package com.example.weatherapp.Network
 
 import com.example.weatherapp.Model.ForecastResponse
 import com.example.weatherapp.Model.WeatherResponse
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -21,37 +23,41 @@ object retrofitHelper {
 
 }
 
-class WeatherRemoteDataSource private constructor() {
+class WeatherRemoteDataSource private constructor() : InterfaceWeatherRemoteDataSource {
     private val retrofit = retrofitHelper.getInstance()
     private val weatherService = retrofit.create(WeatherService::class.java)
 
     companion object {
         @Volatile
-        private var instance: WeatherRemoteDataSource? = null
+        private var instance: InterfaceWeatherRemoteDataSource? = null
 
-        fun getInstance(): WeatherRemoteDataSource {
+        fun getInstance(): InterfaceWeatherRemoteDataSource {
             return instance ?: synchronized(this) {
                 instance ?: WeatherRemoteDataSource().also { instance = it }
             }
         }
     }
 
-    suspend fun getCurrentWeather(
+    override suspend fun getCurrentWeather(
         latitude: Double,
         longitude: Double,
-        units: String = "metric",
-        lang: String = "en"
-    ): Response<WeatherResponse> {
-        return weatherService.getCurrentWeather(latitude, longitude, units, lang)
+        units: String,
+        lang: String
+    ): Flow<Response<WeatherResponse>> {
+
+        return flow {
+            emit(weatherService.getCurrentWeather(latitude, longitude, units, lang))
+        }
+
     }
 
-    suspend fun getFiveDayForecast(
+    override suspend fun getFiveDayForecast(
         latitude: Double,
         longitude: Double,
-        units: String = "metric",
-        lang: String = "en"
-    ): Response<ForecastResponse> {
-        return weatherService.getFiveDayForecast(latitude, longitude, units, lang)
+        units: String,
+        lang: String
+    ): Flow<Response<ForecastResponse>> {
+        return flow { emit(weatherService.getFiveDayForecast(latitude, longitude, units, lang)) }
     }
 
 

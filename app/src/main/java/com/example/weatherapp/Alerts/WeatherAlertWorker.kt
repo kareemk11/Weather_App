@@ -28,7 +28,6 @@ class WeatherAlertWorker(context: Context, workerParams: WorkerParameters) : Wor
 
         val workManagerId = id.toString()
         try {
-            Log.d("WeatherAlertWorker", "Weather alert triggered!")
 
             val isNotification = inputData.getBoolean("isNotification", false)
             val weatherDetails = inputData.getString("weatherDetails")
@@ -45,13 +44,10 @@ class WeatherAlertWorker(context: Context, workerParams: WorkerParameters) : Wor
             }
 
             CoroutineScope(Dispatchers.IO).launch {
-                Log.d("WeatherAlertWorker", "Deleting alert with workManagerId: $workManagerId")
                 repository.deleteAlertByWorkManagerId(workManagerId)
             }
         }catch ( e : Exception) {
-            Log.e("WeatherAlertWorker", "Error in WeatherAlertWorker: ${e.message}", e)
             CoroutineScope(Dispatchers.IO).launch {
-                Log.d("WeatherAlertWorker", "Deleting alert with workManagerId: $workManagerId")
                 repository.deleteAlertByWorkManagerId(workManagerId)
             }
 

@@ -9,7 +9,7 @@ import android.content.SharedPreferences
 object SharedPreferencesUtils {
 
     const val PREF_NAME = "app_settings"
-    private const val FIRST_LAUNCH_KEY = "isFirstLaunch"
+     const val FIRST_LAUNCH_KEY = "isFirstLaunch"
 
     fun isFirstLaunch(sharedPreferences: SharedPreferences): Boolean {
         return sharedPreferences.getBoolean(FIRST_LAUNCH_KEY, true)

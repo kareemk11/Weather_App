@@ -121,8 +121,6 @@ class AlarmOverlayService : Service() {
         temperature: String,
     ): Notification {
 
-        Log.d("WeatherAlert", "Weather details: $weatherDetails")
-        Log.d("WeatherAlert", "Temperature: $temperature")
 
         val channelId = "weather_alert_channel"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -166,23 +164,6 @@ class AlarmOverlayService : Service() {
             .setAutoCancel(true)
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
             .build()
-        /*
-        notificationBuilder
-                .setSmallIcon(iconResId)
-                .setContentTitle("Weather Alert")
-                .setContentText("Weather details: $weatherDetails Temperature: $temperature")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                .addAction(R.drawable.baseline_close_24, "Dismiss", dismissPendingIntent)
-                .setAutoCancel(true)notificationBuilder
-                .setSmallIcon(iconResId)
-                .setContentTitle("Weather Alert")
-                .setContentText("Weather details: $weatherDetails Temperature: $temperature")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                .addAction(R.drawable.baseline_close_24, "Dismiss", dismissPendingIntent)
-                .setAutoCancel(true)
-         */
     }
 
 

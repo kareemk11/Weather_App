@@ -18,17 +18,30 @@
 
             <TextView
                 android:id="@+id/tvCityName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="181dp"
+                android:layout_height="38dp"
                 android:drawablePadding="8dp"
                 android:text="@string/city_name"
+                android:textAlignment="gravity"
                 android:textColor="@android:color/black"
                 android:textSize="24sp"
                 android:textStyle="bold"
                 app:drawableStartCompat="@drawable/baseline_location_on_24"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/tvDateTime"
                 app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/btnFavorite"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/baseline_favorite_24"
+                app:layout_constraintBottom_toBottomOf="@id/tvCityName"
+                app:layout_constraintStart_toEndOf="@+id/tvCityName"
+                app:layout_constraintTop_toTopOf="@id/tvCityName"
+                app:layout_constraintVertical_bias="0.6"
+                app:tint="@color/deep_orange" />
 
             <TextView
                 android:id="@+id/tvDateTime"
@@ -41,7 +54,6 @@
                 app:layout_constraintTop_toBottomOf="@id/tvCityName"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
-
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardMainWeather"

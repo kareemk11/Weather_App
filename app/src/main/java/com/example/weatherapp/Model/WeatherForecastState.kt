@@ -15,3 +15,9 @@ sealed class CurrentWeatherState {
     data class Error(val errorMessage: String) : CurrentWeatherState()
 
 }
+
+sealed class FavouritesState {
+    object Loading : FavouritesState()
+    data class Success(val data: List<CurrentWeather>) : FavouritesState()
+    data class Error(val message: String) : FavouritesState()
+}
