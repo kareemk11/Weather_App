@@ -9,75 +9,80 @@ class WeatherLocalDataSource(
     private val forecastDao: ForecastDao,
     private val alertDao: AlertDao,
     private val currentWeatherDao: CurrentWeatherDao
-) {
+) : InterfaceWeatherLocalDataSource {
 
     // Forecast Methods
-    suspend fun insertForecast(forecast: ForecastLocal) {
+    override suspend fun insertForecast(forecast: ForecastLocal) {
         forecastDao.insertForecast(forecast)
     }
 
-    suspend fun getAllForecasts(): List<ForecastLocal> {
+    override suspend fun getAllForecasts(): List<ForecastLocal> {
         return forecastDao.getAllForecasts()
     }
 
-    suspend fun deleteAllForecasts() {
+    override suspend fun deleteAllForecasts() {
         forecastDao.deleteAllForecasts()
     }
 
-    suspend fun getForecastByWeatherID(currentWeatherId: Int): Flow<List<ForecastLocal>> {
+    override suspend fun getForecastByWeatherID(currentWeatherId: Int): Flow<List<ForecastLocal>> {
         return forecastDao.getForecastByWeatherID(currentWeatherId)
     }
 
-    suspend fun getForecastDetails(): List<ForecastLocal> {
+    override suspend fun getForecastDetails(): List<ForecastLocal> {
         return forecastDao.getForecastDetails()
     }
 
     // Alert Methods
-    suspend fun insertAlert(alert: Alert) {
-        alertDao.insertAlert(alert)
+    override suspend fun insertAlert(alert: Alert?) {
+        if (alert != null) {
+            alertDao.insertAlert(alert)
+        }
     }
 
-    suspend fun getAllAlerts(): Flow<List<Alert>> {
+    override suspend fun getAllAlerts(): Flow<List<Alert>> {
         return alertDao.getAllAlerts()
     }
 
-    suspend fun deleteAlert(id : Int) {
-        alertDao.deleteAlertById(id)
+    override suspend fun deleteAlert(id : Int?) {
+        if (id != null) {
+            alertDao.deleteAlertById(id)
+        }
     }
 
-    suspend fun deleteAlertByWorkManagerId(workManagerId: String) {
-        alertDao.deleteAlertByWorkManagerId(workManagerId)
+    override suspend fun deleteAlertByWorkManagerId(workManagerId: String?) {
+        if (workManagerId != null) {
+            alertDao.deleteAlertByWorkManagerId(workManagerId)
+        }
     }
 
     // Current Weather Methods
-    suspend fun insertCurrentWeather(weather: CurrentWeather):Long {
+    override suspend fun insertCurrentWeather(weather: CurrentWeather):Long {
         return currentWeatherDao.insertCurrentWeather(weather)
     }
 
-//    suspend fun getAllCurrentWeather(): List<CurrentWeather> {
-//        return currentWeatherDao.getAllCurrentWeather()
-//    }
 
-    suspend fun getCurrentWeather(): CurrentWeather {
+
+    override suspend fun getCurrentWeather(): CurrentWeather {
         return currentWeatherDao.getCurrentWeather()
     }
 
-    suspend fun deleteCurrentWeather(id : Int) {
-        currentWeatherDao.deleteCurrentWeatherById(id)
+    override suspend fun deleteCurrentWeather(id : Int?) {
+
+        id?.let { currentWeatherDao.deleteCurrentWeatherById(it) }
     }
 
-    suspend fun getAllFavourites(): Flow<List<CurrentWeather>> {
+    override suspend fun getAllFavourites(): Flow<List<CurrentWeather>> {
         return currentWeatherDao.getAllCurrentWeather()
 
     }
 
-    suspend fun deleteFavourite(id: Int) {
+    override suspend fun deleteFavourite(id: Int?) {
 
-        currentWeatherDao.deleteCurrentWeatherById(id)
+        id?.let { currentWeatherDao.deleteCurrentWeatherById(it) }
 
     }
 
-    suspend fun insertFavourite(favourite: CurrentWeather) {
+    override suspend fun insertFavourite(favourite: CurrentWeather) {
 
         currentWeatherDao.insertCurrentWeather(favourite)
 

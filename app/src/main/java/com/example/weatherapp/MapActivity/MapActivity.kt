@@ -1,4 +1,4 @@
-package com.example.weatherapp
+package com.example.weatherapp.MapActivity
 
 import android.content.SharedPreferences
 import android.location.Address
@@ -9,10 +9,12 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.example.weatherapp.BuildConfig
 import com.example.weatherapp.Favourites.FavouritesViewModel
 import com.example.weatherapp.Favourites.FavouritesViewModelFactory
 import com.example.weatherapp.Model.WeatherRepository
 import com.example.weatherapp.Network.WeatherRemoteDataSource
+import com.example.weatherapp.R
 import com.example.weatherapp.WeatherDatabase.WeatherDatabase
 import com.example.weatherapp.WeatherDatabase.WeatherLocalDataSource
 import com.example.weatherapp.app_utils.InternetConnectionUtil

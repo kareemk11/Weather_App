@@ -42,7 +42,6 @@ class WeatherAlertManager(private val context: Context) {
         val datePicker = dialogView.findViewById<DatePicker>(R.id.date_picker)
         val timePicker = dialogView.findViewById<TimePicker>(R.id.start_time_picker)
 
-        Log.d("WeatherAlert", "DatePicker: $datePicker")
 
         val alertTypeRadioGroup = dialogView.findViewById<RadioGroup>(R.id.alert_type_radio_group)
         val radioAlert = dialogView.findViewById<RadioButton>(R.id.radio_alert)
@@ -131,7 +130,9 @@ class WeatherAlertManager(private val context: Context) {
     ) {
 
         val weatherDetails = viewModel.getWeatherDetailsFromDatabase(delayMillis)
+        Log.d("WeatherAlertManager", "Weather details: $weatherDetails")
         val weatherDetailsString = weatherDetails?.description
+        Log.d("WeatherAlertManager", "Weather details string: $weatherDetailsString")
 
         val temperature = weatherDetails?.temp
 
@@ -147,8 +148,6 @@ class WeatherAlertManager(private val context: Context) {
             .build()
 
         WorkManager.getInstance(context).enqueue(workRequest)
-
-        Log.d("WeatherAlert", "Scheduled alert in: $delayMillis ms")
 
         val workId = workRequest.id
         alert.workManagerId = workId.toString()

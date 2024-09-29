@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,14 +19,16 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.myapp.utils.NotificationUtils
 import com.example.weatherapp.BrodcastRecievers.LocationReceiver
-import com.example.weatherapp.MapActivity
+import com.example.weatherapp.MapActivity.MapActivity
 import com.example.weatherapp.Model.CurrentLocation
 import com.example.weatherapp.Model.CurrentWeatherState
 import com.example.weatherapp.Model.SettingsInPlace
@@ -107,23 +108,27 @@ class HomeFragment : Fragment() {
 
 
         lifecycleScope.launch {
-            viewModel.weatherData.collect { state ->
-                when (state) {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.weatherData.collect { state ->
+                    when (state) {
 
-                    is CurrentWeatherState.Loading -> {
-                        binding.progressBar2.visibility = View.VISIBLE
-                    }
+                        is CurrentWeatherState.Loading -> {
+                            binding.progressBar2.visibility = View.VISIBLE
+                        }
 
-                    is CurrentWeatherState.Success -> {
-                        binding.progressBar2.visibility = View.GONE
-                        updateUI(state.currentWeatherResponse)
-                    }
+                        is CurrentWeatherState.Success -> {
+                            binding.progressBar2.visibility = View.GONE
+                            updateUI(state.currentWeatherResponse)
+                        }
 
-                    is CurrentWeatherState.Error -> {
-                        binding.progressBar2.visibility = View.GONE
-                        Toast.makeText(requireContext(), state.errorMessage, Toast.LENGTH_SHORT)
-                            .show()
-                        viewModel.getWeatherDateFromLocal()
+                        is CurrentWeatherState.Error -> {
+                            binding.progressBar2.visibility = View.GONE
+                            Toast.makeText(requireContext(), state.errorMessage, Toast.LENGTH_SHORT)
+                                .show()
+                            viewModel.getWeatherDateFromLocal()
+                        }
+
+                       else -> {}
                     }
                 }
             }
@@ -131,6 +136,7 @@ class HomeFragment : Fragment() {
 
 
         lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.forecastData.collect { state ->
                 when (state) {
                     is WeatherForecastState.Loading -> {
@@ -153,19 +159,18 @@ class HomeFragment : Fragment() {
                         viewModel.getForecastDataFromLocal()
 
                     }
+
+                   else -> {}
                 }
 
             }
+                }
         }
 
-//        viewModel.weatherData.observe(viewLifecycleOwner) {
+//        viewModel.weatherData.observe(viewLifecycleOwner)
 //            updateUI()
-//        }
-//
-//        viewModel.forecastData.observe(viewLifecycleOwner) {
-//            adapter.updateData(FilterUtils.filterCurrentDayData(it))
-//            adapterForecast.updateData(FilterUtils.filterDailyData(it))
-//        }
+
+
         binding.fabChangeLocation.setOnClickListener {
             val intent = Intent(activity, MapActivity::class.java)
             intent.putExtra("isFavourite", false)
@@ -222,7 +227,6 @@ class HomeFragment : Fragment() {
         if (SettingsInPlace.locationMethod == "GPS") {
             binding.fabChangeLocation.visibility = View.GONE
             if (checkLocationPermission()) {
-                Log.i(TAG, "handleLocationAndPermissions: ")
                 checkIfLocationEnabled()
             } else {
                 requestPermission()
@@ -253,7 +257,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun requestPermission() {
-        Log.i(TAG, "requestPermission: ")
         requestPermissions(
             arrayOf(
                 android.Manifest.permission.ACCESS_FINE_LOCATION,
@@ -263,12 +266,9 @@ class HomeFragment : Fragment() {
     }
 
     private fun checkIfLocationEnabled() {
-        Log.i(TAG, "checkIfLocationEnabled: ")
         if (isLocationEnabled()) {
-            Log.i(TAG, "checkIfLocationEnabled: Enabled")
             getFreshLocation()
         } else {
-            Log.i(TAG, "checkIfLocationEnabled: Disabled")
             enableLocation()
         }
     }
@@ -283,12 +283,11 @@ class HomeFragment : Fragment() {
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
-        Log.i(TAG, "onRequestPermissionsResult: ")
+
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                 checkIfLocationEnabled()
-                Log.i(TAG, "onRequestPermissionsResult: ")
             } else {
                 Toast.makeText(
                     context,
@@ -308,7 +307,6 @@ class HomeFragment : Fragment() {
             requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
         val networkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-        Log.d(TAG, "GPS Enabled: $gpsEnabled, Network Enabled: $networkEnabled")
         return gpsEnabled || networkEnabled
     }
 
@@ -333,7 +331,6 @@ class HomeFragment : Fragment() {
                         viewModel.fetchForecastData(latitude, longitude)
                         binding.progressBar2.visibility = View.GONE
                         binding.group.visibility = View.GONE
-                        Log.i("Result", "onLocationResult: $latitude $longitude")
                         fusedLocationProviderClient.removeLocationUpdates(this)
                     }
                 },
@@ -352,7 +349,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun checkLocationPermission(): Boolean {
-        Log.i(TAG, "checkLocationPermission: ")
+
         return requireContext().checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                 requireContext().checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
@@ -465,7 +462,6 @@ class HomeFragment : Fragment() {
         binding.tvHumidityValue.visibility = View.GONE
         binding.tvMaxTemp.visibility = View.GONE
         binding.tvMinTemp.visibility = View.GONE
-
 
     }
 }

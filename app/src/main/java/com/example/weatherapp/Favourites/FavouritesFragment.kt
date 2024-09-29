@@ -2,18 +2,21 @@ package com.example.weatherapp.Favourites
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weatherapp.Favourites.FavouritesWeather.FavouritesWeatherActivity
-import com.example.weatherapp.MapActivity
+import com.example.weatherapp.MapActivity.MapActivity
 import com.example.weatherapp.Model.CurrentWeather
+import com.example.weatherapp.Model.FavouritesState
 import com.example.weatherapp.Model.WeatherRepository
 import com.example.weatherapp.Network.WeatherRemoteDataSource
 import com.example.weatherapp.WeatherDatabase.WeatherDatabase
@@ -55,16 +58,41 @@ class FavouritesFragment : Fragment() {
         setupRecyclerView()
 
         binding.addFavoriteButton.setOnClickListener {
+
             val intent = Intent(activity, MapActivity::class.java)
             intent.putExtra("isFavourite", true)
             startActivity(intent)
         }
 
-        favouritesViewModel.favourites.observe(viewLifecycleOwner) { favourites ->
-            favouritesAdapter.updateData(favourites)
-        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                favouritesViewModel.favourites.collect { favouritesState ->
+                    when (favouritesState) {
+                        is FavouritesState.Loading -> {
+                            // Show loading state
+                        }
 
-        favouritesViewModel.fetchFavourites()
+                        is FavouritesState.Success -> {
+                            favouritesAdapter.updateData(favouritesState.data)
+                        }
+
+                        is FavouritesState.Error -> {
+                            // Show error state
+                        }
+                    }
+
+                }
+            }
+        }
+//        favouritesViewModel.favourites.observe(viewLifecycleOwner) { favourites ->
+//            favouritesAdapter.updateData(favourites)
+//        }
+
+        binding.searchEditText.addTextChangedListener {
+            lifecycleScope.launch {
+                favouritesViewModel.updateSearchQuery(it.toString())
+            }
+        }
     }
 
     private fun setupRecyclerView() {
@@ -74,25 +102,25 @@ class FavouritesFragment : Fragment() {
 
         favouritesAdapter = WeatherLocationAdapter(
             emptyList(),
-            { favourite ->
-                CoroutineScope(Dispatchers.Main).launch {
-                    val result = DeleteAlerts.showDeleteAlert(
-                        context = requireActivity(),
-                        title = "Delete Item",
-                        message = "Are you sure you want to delete ${favourite.name} from favourites?"
-                    )
-                    if (result) {
-                        favouritesViewModel.deleteFavourite(favourite)
-                        Toast.makeText(requireContext(), "Item deleted", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            },
-            { favouriteWeatherObject ->
-                navigateToFavouriteWeatherActivity(favouriteWeatherObject)
-            }
+            { favourite -> deleteFavourite(favourite) },
+            { favourite -> navigateToFavouriteWeatherActivity(favourite) }
         )
 
         binding.favoritesRecyclerView.adapter = favouritesAdapter
+    }
+
+    private fun deleteFavourite(favourite: CurrentWeather) {
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = DeleteAlerts.showDeleteAlert(
+                context = requireActivity(),
+                title = "Delete Item",
+                message = "Are you sure you want to delete ${favourite.name} from favourites?"
+            )
+            if (result) {
+                favouritesViewModel.deleteFavourite(favourite)
+                Toast.makeText(requireContext(), "Item deleted", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun navigateToFavouriteWeatherActivity(favouriteWeatherObject: CurrentWeather) {
@@ -106,4 +134,5 @@ class FavouritesFragment : Fragment() {
         favouritesViewModel.fetchFavourites()
     }
 }
+
 

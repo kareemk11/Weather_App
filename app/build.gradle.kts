@@ -67,8 +67,17 @@ android {
     }
 }
 
-dependencies {
+val junitVersion = "4.13.2"
+val hamcrestVersion = "2.2"
+val archTestingVersion = "2.1.0"
+val robolectricVersion = "4.8"
+val androidXTestCoreVersion = "1.4.0"
+val androidXTestExtKotlinRunnerVersion = "1.1.5"
+val espressoVersion = "3.4.0"
+val coroutinesVersion = "1.6.4"
 
+
+dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -85,42 +94,47 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.work.runtime.ktx)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
 
-    implementation(libs.androidx.navigation.fragment)
-    implementation(libs.androidx.navigation.ui)
+    // Unit testing
+    testImplementation("junit:junit:$junitVersion")
+    testImplementation("org.hamcrest:hamcrest:2.2")
+    testImplementation("org.hamcrest:hamcrest-library:2.2")
+    testImplementation("androidx.arch.core:core-testing:$archTestingVersion")
+    testImplementation("org.robolectric:robolectric:$robolectricVersion")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
 
+    // AndroidX Test - JVM testing
+    testImplementation("androidx.test:core-ktx:$androidXTestCoreVersion")
+    testImplementation(libs.junit.jupiter)
+
+    // AndroidX Test - Instrumented testing
+    androidTestImplementation("androidx.test.ext:junit-ktx:$androidXTestExtKotlinRunnerVersion")
+    androidTestImplementation("androidx.test.espresso:espresso-core:$espressoVersion")
+    androidTestImplementation("androidx.arch.core:core-testing:$archTestingVersion")
+
+    // Timber for logging
+    implementation("com.jakewharton.timber:timber:5.0.1")
+
+    // Additional dependencies for navigation, maps, etc.
     implementation(libs.androidx.drawerlayout)
     implementation(libs.material)
-
-    //Glide
     implementation(libs.glide)
     annotationProcessor(libs.compiler)
-//Retrofit
     implementation(libs.gson)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
-//Room
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
     kapt(libs.androidx.room.compiler)
-
     implementation("com.google.android.gms:play-services-maps:18.0.1")
     implementation(libs.play.services.location)
     implementation(libs.places)
     implementation(libs.dotenv.kotlin)
-    implementation(libs.material)
-    implementation (libs.androidx.appcompat)
+}
+
 
 //Coroutine
 //    implementation '("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")'
 ////ViewModel
 //    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
 //    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
-}

@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">تطبيق الطقس</string>
-    <string name="open_nav">فتح درج التنقل</string>
-    <string name="close_nav">إغلاق درج التنقل</string>
+    <string name="open_nav">فتح قائمة التنقل</string>
+    <string name="close_nav">إغلاق قائمة التنقل</string>
 
     <string name="settings">الإعدادات</string>
     <string name="home">الرئيسية</string>
@@ -10,9 +10,9 @@
     <string name="alerts">التنبيهات</string>
     <string name="weather_wizard">ساحر الطقس</string>
 
-    <string name="hello_blank_fragment">مرحبا بالجزء الفارغ</string>
+    <string name="hello_blank_fragment">مرحباً، مكون فارغ</string>
     <string name="navigation_drawer_open">فتح</string>
-    <string name="navigation_drawer_close">مغلق</string>
+    <string name="navigation_drawer_close">إغلاق</string>
 
     <string name="nav_header_title">أندرويد ستوديو</string>
     <string name="nav_header_subtitle">android.studio@android.com</string>
@@ -22,24 +22,24 @@
     <string name="menu_home">الرئيسية</string>
     <string name="menu_gallery">المعرض</string>
     <string name="menu_slideshow">عرض الشرائح</string>
-    <string name="_25_c">٢٥° مئوية</string>
+    <string name="_25_c">٢٥°م</string>
     <string name="clear_sky">سماء صافية</string>
     <string name="city_name">اسم المدينة</string>
     <string name="date_and_time">التاريخ والوقت</string>
-    <string name="initial_setup">الإعداد الأولي</string>
+    <string name="initial_setup">إعدادات أولية</string>
     <string name="location">الموقع</string>
-    <string name="gps">نظام تحديد المواقع</string>
+    <string name="gps">نظام تحديد المواقع GPS</string>
     <string name="map">الخريطة</string>
     <string name="notifications">الإشعارات</string>
     <string name="enable_notifications">تفعيل الإشعارات</string>
-    <string name="_28_c">٢٨° مئوية</string>
-    <string name="_18_c">١٨° مئوية</string>
-    <string name="clouds">الغيوم</string>
+    <string name="_28_c">٢٨°م</string>
+    <string name="_18_c">١٨°م</string>
+    <string name="clouds">غيوم</string>
     <string name="_20">٢٠٪</string>
     <string name="wind">الرياح</string>
     <string name="_10_m_s">١٠ م/ث</string>
     <string name="pressure">الضغط</string>
-    <string name="_1015_hpa">١٠١٥ هكتوباسكال</string>
+    <string name="_1015_hpa">١٠١٥ هيكتوباسكال</string>
     <string name="humidity">الرطوبة</string>
     <string name="_60">٦٠٪</string>
     <string name="visibility">الرؤية</string>
@@ -50,7 +50,26 @@
     <string name="arabic">العربية</string>
     <string name="english">الإنجليزية</string>
     <string name="units">الوحدات</string>
-    <string name="meters_per_second_m_s_celsius">متر في الثانية (م/ث) / مئوية</string>
-    <string name="miles_per_hour_mph_celsius">ميل في الساعة (ميل/ساعة) / مئوية</string>
-    <string name="meters_per_second_m_s_kelvin">متر في الثانية (م/ث) / كلفن</string>
+    <string name="meters_per_second_m_s_celsius">أمتار في الثانية (م/ث) / درجة مئوية</string>
+    <string name="miles_per_hour_mph_celsius">ميل في الساعة (ميل/س) / فهرنهايت</string>
+    <string name="meters_per_second_m_s_kelvin">أمتار في الثانية (م/ث) / كلفن</string>
+    <string name="title">العنوان</string>
+    <string name="location_enabled">تم تفعيل الموقع</string>
+    <string name="location_permission_denied">تم رفض إذن الموقع</string>
+    <string name="enable_location">يرجى تفعيل الموقع</string>
+
+    <string name="my_location">موقعي</string>
+    <string name="tap_to_select_location">اضغط على الخريطة لتحديد الموقع</string>
+    <string name="confirm_location">تأكيد الموقع</string>
+    <string name="notifications_disabled">الإشعارات معطلة، يرجى تفعيلها في الإعدادات.</string>
+    <string name="notifications_enabled">تم تفعيل الإشعارات.</string>
+    <string name="weather_alert">تنبيه الطقس!</string>
+    <string name="heavy_rain_expected">من المتوقع هطول أمطار غزيرة</string>
+    <string name="_22_c">٢٢°م</string>
+    <string name="dismiss">رفض</string>
+    <string name="delete_alert">حذف التنبيه</string>
+    <string name="select_date">اختر التاريخ</string>
+    <string name="start_time">وقت البدء</string>
+    <string name="alert">تنبيه</string>
+    <string name="notification">إشعار</string>
 </resources>

@@ -1,22 +1,21 @@
 package com.example.weatherapp.Model
 
-import android.util.Log
-import com.example.weatherapp.Network.WeatherRemoteDataSource
-import com.example.weatherapp.WeatherDatabase.WeatherLocalDataSource
+import com.example.weatherapp.Network.InterfaceWeatherRemoteDataSource
+import com.example.weatherapp.WeatherDatabase.InterfaceWeatherLocalDataSource
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.transform
 import retrofit2.Response
 
 class WeatherRepository private constructor(
-    private val localDataSource: WeatherLocalDataSource,
-    private val remoteDataSource: WeatherRemoteDataSource
-) {
+    private val localDataSource: InterfaceWeatherLocalDataSource,
+    private val remoteDataSource: InterfaceWeatherRemoteDataSource
+) : InterfaceWeatherRepository {
     companion object {
         @Volatile
         private var instance: WeatherRepository? = null
 
         fun getInstance(
-            localDataSource: WeatherLocalDataSource,
-            remoteDataSource: WeatherRemoteDataSource
+            localDataSource: InterfaceWeatherLocalDataSource, remoteDataSource: InterfaceWeatherRemoteDataSource
         ): WeatherRepository {
             return instance ?: synchronized(this) {
                 instance ?: WeatherRepository(localDataSource, remoteDataSource).also {
@@ -25,105 +24,129 @@ class WeatherRepository private constructor(
             }
         }
     }
+//
+//    override suspend fun getCurrentWeather(
+//        latitude: Double,
+//        longitude: Double,
+//        units: String,
+//        lang: String,
+//        isFavourite: Boolean
+//    ): Flow<Response<WeatherResponse>> {
+//        return remoteDataSource.getCurrentWeather(latitude, longitude, units, lang).transform { response ->
+//            if (response.isSuccessful) {
+//                response.body()?.let { weatherResponse ->
+//                    if (!isFavourite) {
+//                        val currentWeather = weatherResponse.toCurrentWeather(latitude, longitude, 1) // Conversion method
+//                        localDataSource.insertCurrentWeather(currentWeather)
+//                    }
+//                    emit(response)
+//                } ?: emit(response)
+//            } else {
+//                emit(response)
+//            }
+//        }
+//    }
+suspend fun insertCurrentWeather(currentWeather: CurrentWeather) {
 
-    suspend fun getCurrentWeather(
+        localDataSource.insertCurrentWeather(currentWeather)
+
+}
+
+    override suspend fun getCurrentWeather(
         latitude: Double,
         longitude: Double,
-        units: String = "metric",
-        lang: String = "en",
-        isFavourite: Boolean = false
-    ): Response<WeatherResponse> {
-        val response = remoteDataSource.getCurrentWeather(latitude, longitude, units, lang)
-            if (!isFavourite) {
-                response.body()?.let { weatherResponse ->
-                    val currentWeather = weatherResponse.toCurrentWeather(
-                        latitude,
-                        longitude,
-                        1
-                    ) // Conversion method
-                    localDataSource.insertCurrentWeather(currentWeather)
-                }
-            }
+        units: String,
+        lang: String,
+        isFavourite: Boolean
+    ): Flow<Response<WeatherResponse>> {
+        //val currentWeather = remoteDataSource.getCurrentWeather(latitude, longitude, units, lang)
 
-
-        return response
-
+        return remoteDataSource.getCurrentWeather(latitude, longitude, units, lang)
     }
 
-    suspend fun getFiveDayForecast(
+//    override suspend fun getFiveDayForecast(
+//        latitude: Double,
+//        longitude: Double,
+//        units: String,
+//        lang: String,
+//        isFavourite: Boolean
+//    ): Flow<Response<ForecastResponse>> {
+//        return remoteDataSource.getFiveDayForecast(latitude, longitude, units, lang).transform { response ->
+//            if (response.isSuccessful) {
+//                response.body()?.let { forecastResponse ->
+//                    if (!isFavourite) {
+//                        val forecasts = forecastResponse.toForecastLocalList()
+//                        forecasts.forEach { forecast ->
+//                            localDataSource.insertForecast(forecast)
+//                        }
+//                    }
+//                    emit(response)
+//                } ?: emit(response)
+//            } else {
+//                emit(response)
+//            }
+//        }
+//    }
+
+    override suspend fun getFiveDayForecast(
         latitude: Double,
         longitude: Double,
-        units: String = "metric",
-        lang: String = "en",
-        isFavourite: Boolean = false
-    ): Response<ForecastResponse> {
-        val response = remoteDataSource.getFiveDayForecast(latitude, longitude, units, lang)
-        if (response.isSuccessful) {
-            if (!isFavourite) {
-                response.body()?.let { forecastResponse ->
-                    val forecasts = forecastResponse.toForecastLocalList()
-                    forecasts.forEach { forecast ->
-                        localDataSource.insertForecast(forecast)
-                    }
-                }
-            }
-
-        }
-        return response
+        units: String,
+        lang: String,
+        isFavourite: Boolean
+    ): Flow<Response<ForecastResponse>> {
+        return remoteDataSource.getFiveDayForecast(latitude, longitude, units, lang)
     }
 
-    suspend fun getAllAlerts(): Flow<List<Alert>> {
+
+
+
+
+    override suspend fun getAllAlerts(): Flow<List<Alert>> {
         return localDataSource.getAllAlerts()
     }
 
-    suspend fun insertAlert(alert: Alert) {
+    override suspend fun insertAlert(alert: Alert?) {
         localDataSource.insertAlert(alert)
     }
 
-    suspend fun deleteAlert(alert: Alert) {
-        localDataSource.deleteAlert(alert.id)
+    override suspend fun deleteAlert(alert: Alert?) {
+        localDataSource.deleteAlert(alert?.id)
     }
 
-    suspend fun deleteAlertByWorkManagerId(workManagerId: String) {
-        Log.d("WeatherRepository", "Deleting alert with workManagerId: $workManagerId")
+    override suspend fun deleteAlertByWorkManagerId(workManagerId: String?) {
         localDataSource.deleteAlertByWorkManagerId(workManagerId)
     }
 
 
-    suspend fun getForecastByWeatherID(currentWeatherId: Int): Flow<List<ForecastLocal>> {
+    override suspend fun getForecastByWeatherID(currentWeatherId: Int): Flow<List<ForecastLocal>> {
         return localDataSource.getForecastByWeatherID(currentWeatherId)
     }
 
-    suspend fun getForecastDetails():List<ForecastLocal>{
+    override suspend fun getForecastDetails(): List<ForecastLocal> {
         return localDataSource.getForecastDetails()
     }
 
-    /*
-    suspend fun getAllCurrentWeather(): List<CurrentWeather> {
-    return localDataSource.getAllCurrentWeather()
-    }
-    */
 
-    suspend fun getCurrentWeatherFromLocal(): CurrentWeather {
+    override suspend fun getCurrentWeatherFromLocal(): CurrentWeather {
         return localDataSource.getCurrentWeather()
     }
 
-    suspend fun getAllFavourites(): Flow<List<CurrentWeather>> {
+    override suspend fun getAllFavourites(): Flow<List<CurrentWeather>> {
         return localDataSource.getAllFavourites()
     }
 
-    suspend fun deleteFavourite(favourite: CurrentWeather) {
-
-        localDataSource.deleteFavourite(favourite.id)
-
-    }
-
-    suspend fun insertFavourite(favourite: CurrentWeather): Long {
-        return localDataSource.insertCurrentWeather(favourite)
+    override suspend fun deleteFavourite(favourite: CurrentWeather?) {
+        localDataSource.deleteFavourite(favourite?.id)
 
     }
 
-    suspend fun insertForecast(forecast: ForecastLocal) {
+    override suspend fun insertFavourite(favourite: CurrentWeather?): Long {
+        return favourite?.let { localDataSource.insertCurrentWeather(it) } ?: 0
+
+    }
+
+    override suspend fun insertForecast(forecast: ForecastLocal) {
         localDataSource.insertForecast(forecast)
 
     }

@@ -1,200 +1,195 @@
 package com.example.weatherapp.Favourites
 
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weatherapp.Model.CurrentWeather
 import com.example.weatherapp.Model.CurrentWeatherState
+import com.example.weatherapp.Model.FavouritesState
+import com.example.weatherapp.Model.InterfaceWeatherRepository
 import com.example.weatherapp.Model.SettingsInPlace
 import com.example.weatherapp.Model.WeatherForecastState
-import com.example.weatherapp.Model.WeatherRepository
 import com.example.weatherapp.Model.toCurrentWeather
 import com.example.weatherapp.Model.toForecastLocalList
 import com.example.weatherapp.Model.toForecastResponse
 import com.example.weatherapp.Model.toWeatherResponse
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
-class FavouritesViewModel(private val repository: WeatherRepository) : ViewModel() {
+class FavouritesViewModel(private val repository: InterfaceWeatherRepository) : ViewModel() {
 
-    private val _favourites = MutableLiveData<List<CurrentWeather>>()
-    val favourites: MutableLiveData<List<CurrentWeather>> = _favourites
-    //private val _weatherResponse = MutableLiveData<WeatherResponse>()
-    private val _weatherResponse = MutableStateFlow<CurrentWeatherState>(CurrentWeatherState.Loading)
-    val weather:StateFlow<CurrentWeatherState> = _weatherResponse
-    private val _forecastResponse =MutableStateFlow<WeatherForecastState>(WeatherForecastState.Loading)
+    private val _favourites = MutableStateFlow<FavouritesState>(FavouritesState.Loading)
+    val favourites: StateFlow<FavouritesState> = _favourites
+
+    private val _weatherResponse =
+        MutableStateFlow<CurrentWeatherState>(CurrentWeatherState.Loading)
+    val weather: StateFlow<CurrentWeatherState> = _weatherResponse
+    private val _forecastResponse =
+        MutableStateFlow<WeatherForecastState>(WeatherForecastState.Loading)
     val forecast: StateFlow<WeatherForecastState> = _forecastResponse
+    private val _searchQuery = MutableSharedFlow<String>(replay = 1)
+    val searchQuery: SharedFlow<String> = _searchQuery
 
-    fun fetchFavourites() {
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.getAllFavourites().collect {
-                _favourites.postValue(it)
-                //Log.i("FavouritesViewModel", "fetchFavourites: ${it.size}")
+    init {
+        observeSearchQuery()
+    }
+
+    private fun observeSearchQuery() {
+        viewModelScope.launch {
+            _favourites.value = FavouritesState.Loading
+            try {
+                searchQuery.collectLatest { query ->
+                    repository.getAllFavourites().collect { allFavourites ->
+                        val filteredFavourites = allFavourites.filter {
+                            it.name.startsWith(query, ignoreCase = true)
+                        }
+                        _favourites.value = FavouritesState.Success(filteredFavourites)
+                    }
+                }
+            } catch (e: Exception) {
+                _favourites.value = FavouritesState.Error(e.message ?: "Unknown error")
             }
-
-
         }
     }
 
-    fun deleteFavourite(favourite: CurrentWeather) {
+
+
+
+    suspend fun updateSearchQuery(query: String) {
+        _searchQuery.emit(query)
+    }
+
+    fun fetchFavourites() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _favourites.value = FavouritesState.Loading
+            try {
+                repository.getAllFavourites().collect {
+                    _favourites.value = FavouritesState.Success(it)
+                }
+            } catch (e: Exception) {
+                _favourites.value = FavouritesState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+
+
+    fun deleteFavourite(favourite: CurrentWeather?) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.deleteFavourite(favourite)
         }
     }
 
-//    fun insertFavourite(favourite: CurrentWeather) {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            repository.insertFavourite(favourite)
-//
-//        }
-//    }
 
     fun saveFavouriteLocation(latitude: Double, longitude: Double) {
         viewModelScope.launch(Dispatchers.IO) {
             var id: Long = 0
 
-            Log.i("FavouritesViewModel", "saveFavouriteLocation: $latitude $longitude")
-
-            val response = repository.getCurrentWeather(
-                latitude,
-                longitude,
-                SettingsInPlace.unit,
-                SettingsInPlace.language,
-                true)
-            if (response.isSuccessful) {
-                val currentWeather = response.body()
-                if (currentWeather != null) {
-                    id = repository.insertFavourite(
-                        currentWeather.toCurrentWeather(
-                            latitude,
-                            longitude
+            // Collecting the flow for current weather
+            repository.getCurrentWeather(
+                latitude, longitude, SettingsInPlace.unit, SettingsInPlace.language, true
+            ).collect { response ->
+                if (response.isSuccessful) {
+                    val currentWeather = response.body()
+                    if (currentWeather != null) {
+                        id = repository.insertFavourite(
+                            currentWeather.toCurrentWeather(latitude, longitude)
                         )
-                    )
-                    Log.i("FavouritesViewModel", "Inserted Favourite ID: $id")
-                }
-            } else {
-                Log.i("FavouritesViewModel", "Error fetching current weather: ${response.errorBody()}")
-            }
-
-            Log.i("FavouritesViewModel", "Inserted Favourite ID: $id")
-
-            if (id > 0) {
-                val forecastResponse = repository.getFiveDayForecast(
-                    latitude,
-                    longitude,
-                    SettingsInPlace.unit,
-                    SettingsInPlace.language,
-                    true)
-                if (forecastResponse.isSuccessful) {
-                    val forecastResponseTemp = forecastResponse.body()
-                    if (forecastResponseTemp != null) {
-                        val forecasts = forecastResponseTemp.toForecastLocalList(id.toInt())
-
-                        forecasts.forEach { forecast ->
-                            forecast.currentWeatherId = id.toInt()
-                            repository.insertForecast(forecast)
-                            Log.i("FavouritesViewModel", "Inserted forecast: $forecast")
-                        }
-                        Log.i("FavouritesViewModel", "Inserted ${forecasts.size} forecast entries")
                     }
                 } else {
-                    Log.i("FavouritesViewModel", "Error fetching forecast: ${forecastResponse.errorBody()}")
+                    // Handle error if needed
                 }
-            } else {
-                Log.i("FavouritesViewModel", "Current weather insertion failed, skipping forecast insertion.")
+
+                if (id > 0) {
+                    repository.getFiveDayForecast(
+                        latitude, longitude, SettingsInPlace.unit, SettingsInPlace.language, true
+                    ).collect { forecastResponse ->
+                        if (forecastResponse.isSuccessful) {
+                            val forecastResponseTemp = forecastResponse.body()
+                            if (forecastResponseTemp != null) {
+                                val forecasts = forecastResponseTemp.toForecastLocalList(id.toInt())
+
+                                forecasts.forEach { forecast ->
+                                    forecast.currentWeatherId = id.toInt()
+                                    repository.insertForecast(forecast)
+                                    Log.i("FavouritesViewModel", "Inserted forecast: $forecast")
+                                }
+                                Log.i("FavouritesViewModel", "Inserted ${forecasts.size} forecast entries")
+                            }
+                        } else {
+                            Timber.tag("FavouritesViewModel")
+                                .i("Error fetching forecast: %s", forecastResponse.errorBody())
+                        }
+                    }
+                } else {
+                    Log.i(
+                        "FavouritesViewModel",
+                        "Current weather insertion failed, skipping forecast insertion."
+                    )
+                }
             }
         }
     }
 
-
     fun fetchWeatherDataFavourites(latitude: Double, longitude: Double) {
         viewModelScope.launch(Dispatchers.IO) {
-
-//            val weatherResponse = repository.getCurrentWeather(
-//                latitude,
-//                longitude,
-//                SettingsInPlace.unit,
-//                SettingsInPlace.language,
-//                true,
-//            )
-//            if (weatherResponse.isSuccessful) {
-//                _weatherResponse.postValue(weatherResponse.body())
-//
-//            } else {
-//                // Handle error
-//            }
-
             try {
-                val weatherResponse = repository.getCurrentWeather(
-                    latitude,
-                    longitude,
-                    SettingsInPlace.unit,
-                    SettingsInPlace.language,
-                    true)
-                _weatherResponse.value =CurrentWeatherState.Success(weatherResponse.body())
-
-
-            } catch (
-                e: Exception
-            ) {
-                _weatherResponse.value = CurrentWeatherState.Error(e.message?: "Unknown error" )
-
+                // Collecting the flow for current weather
+                repository.getCurrentWeather(
+                    latitude, longitude, SettingsInPlace.unit, SettingsInPlace.language, true
+                ).collect { response ->
+                    if (response.isSuccessful) {
+                        _weatherResponse.value = CurrentWeatherState.Success(response.body())
+                    } else {
+                        _weatherResponse.value = CurrentWeatherState.Error(response.errorBody()?.string() ?: "Unknown error")
+                    }
+                }
+            } catch (e: Exception) {
+                _weatherResponse.value = CurrentWeatherState.Error(e.message ?: "Unknown error")
             }
-
-
-
         }
-
     }
 
     fun fetchForecastDataFavourites(latitude: Double, longitude: Double) {
         viewModelScope.launch(Dispatchers.IO) {
-//            val forecastResponse = repository.getFiveDayForecast(
-//                latitude,
-//                longitude,
-//                SettingsInPlace.unit,
-//                SettingsInPlace.language,
-//                true
-//            )
-//            if (forecastResponse.isSuccessful) {
-//                _forecastResponse.postValue(forecastResponse.body())
-//            } else {
-//                // Handle error
-//            }
             try {
-
-                val weatherResponse = repository.getFiveDayForecast(
-                    latitude,
-                    longitude,
-                    SettingsInPlace.unit,
-                    SettingsInPlace.language,
-                    true)
-
-                _forecastResponse.value = WeatherForecastState.Success(weatherResponse.body())
-
+                // Collecting the flow for five-day forecast
+                repository.getFiveDayForecast(
+                    latitude, longitude, SettingsInPlace.unit, SettingsInPlace.language, true
+                ).collect { forecastResponse ->
+                    if (forecastResponse.isSuccessful) {
+                        _forecastResponse.value = WeatherForecastState.Success(forecastResponse.body())
+                    } else {
+                        _forecastResponse.value = WeatherForecastState.Error(forecastResponse.errorBody()?.string() ?: "Unknown error")
+                    }
+                }
             } catch (e: Exception) {
-
-                _forecastResponse.value = WeatherForecastState.Error(e.message?: "Unknown error")
-
+                _forecastResponse.value = WeatherForecastState.Error(e.message ?: "Unknown error")
             }
         }
-
     }
+
 
     fun getFavouriteForecastDataFromLocal(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.getForecastByWeatherID(id).collect{
+            repository.getForecastByWeatherID(id).collect {
                 _forecastResponse.value = WeatherForecastState.Success(it.toForecastResponse())
             }
         }
     }
 
-    fun getFavouriteWeatherDateFromLocal(favourite: CurrentWeather) {
 
+    fun getFavouriteWeatherDateFromLocal(favourite: CurrentWeather?) {
+        if (favourite == null) {
+            return
+        }
         _weatherResponse.value = CurrentWeatherState.Success(favourite.toWeatherResponse())
-        //_weatherResponse.value = favourite.toWeatherResponse()
     }
+
 }

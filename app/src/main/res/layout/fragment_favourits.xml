@@ -17,6 +17,47 @@
         android:textStyle="bold"
         android:layout_marginBottom="16dp"/>
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/searchCardView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/titleTextView"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="4dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_search"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                app:tint="@android:color/darker_gray"/>
+
+            <EditText
+                android:id="@+id/searchEditText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@null"
+                android:hint="Search favorite places"
+                android:inputType="text"
+                android:imeOptions="actionSearch"
+                android:textSize="16sp"
+                android:minHeight="48dp"/>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/addFavoriteButton"
         android:layout_width="wrap_content"
@@ -33,7 +74,7 @@
         android:id="@+id/contentFrame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/titleTextView">
+        android:layout_below="@id/searchCardView">
 
         <LinearLayout
             android:id="@+id/emptyStateView"
