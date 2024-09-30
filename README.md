@@ -31,3 +31,11 @@ This is a weather app that provides users with real-time weather updates for the
    ```bash
    git clone https://github.com/kk98989898/Weather_App.git
    cd weather-app
+
+
+   ## Project Setup
+
+### SDK Versions
+- **Compile SDK Version**: 34
+- **Minimum SDK Version**: 24
+- **Target SDK Version**: 34
