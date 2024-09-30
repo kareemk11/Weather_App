@@ -38,4 +38,4 @@ This is a weather app that provides users with real-time weather updates for the
 1. Clone the repository:
    ```bash
    git clone https://github.com/kk98989898/Weather_App.git
-   cd Weather_App
+
